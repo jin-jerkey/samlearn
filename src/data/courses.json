@@ -1,0 +1,52 @@
+{
+  "courses": [
+    {
+      "id": 1,
+      "title": "Les intégrales en mathématiques",
+      "thumbnail": "/math.jpeg",
+      "duration": "2h 30min",
+      "author": "John Doe",
+      "category": "Mathématiques"
+    },
+    {
+      "id": 2,
+      "title": "Physique quantique - Introduction",
+      "thumbnail": "/physique.jpeg",
+      "duration": "1h 45min",
+      "author": "Jane Smith",
+      "category": "Physique"
+    },
+    {
+      "id": 3,
+      "title": "Chimie organique avancée",
+      "thumbnail": "/chimi.jpeg",
+      "duration": "3h 15min",
+      "author": "Robert Johnson",
+      "category": "Chimie"
+    },
+    {
+      "id": 4,
+      "title": "Algèbre linéaire",
+      "thumbnail": "/math.jpeg",
+      "duration": "2h 00min",
+      "author": "Marie Claire",
+      "category": "Mathématiques"
+    },
+    {
+        "id": 5,
+        "title": "Algèbre linéaire",
+        "thumbnail": "/math.jpeg",
+        "duration": "2h 00min",
+        "author": "Marie Claire",
+        "category": "Mathématiques"
+      },
+      {
+        "id": 6,
+        "title": "Algèbre linéaire",
+        "thumbnail": "/math.jpeg",
+        "duration": "2h 00min",
+        "author": "Marie Claire",
+        "category": "Mathématiques"
+      }
+  ]
+}

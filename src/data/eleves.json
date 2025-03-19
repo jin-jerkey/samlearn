@@ -1,0 +1,22 @@
+{
+  "eleves": [
+    {
+      "id": 1,
+      "nom": "John Doe",
+      "email": "john@example.com",
+      "password": "test123"
+    },
+    {
+      "id": 2,
+      "nom": "Jane Smith",
+      "email": "jane@example.com",
+      "password": "test456"
+    },
+    {
+      "id": 3,
+      "nom": "Robert Johnson",
+      "email": "robert@example.com",
+      "password": "test789"
+    }
+  ]
+}
