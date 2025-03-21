@@ -25,7 +25,7 @@ export default function Auth() {
         <form className="mt-8 space-y-6">
           <div>
             <Link
-              href="/auth/register"
+              href="/eleve/loginEleve"
               className="font-medium text-orange-500 hover:text-orange-400"
             >
               <button
@@ -42,7 +42,7 @@ export default function Auth() {
 
           <div>
             <Link
-              href="/auth/register"
+              href="/formateur"
               className="font-medium text-orange-500 hover:text-orange-400"
             >
               <button
@@ -60,7 +60,7 @@ export default function Auth() {
           <div className="flex items-center justify-between">
             <div className="text-sm">
               <Link
-                href="/auth/register"
+                href="/admin"
                 className="font-medium text-orange-500 hover:text-orange-400"
               >
                 Créer un compte

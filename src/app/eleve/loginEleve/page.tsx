@@ -2,27 +2,38 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import elevesData from '@/data/eleves.json';
+import Image from "next/image";
 
-export default function LoginEleve() {
+export default function RegisterEleve() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    const eleve = elevesData.eleves.find(
-      (e) => e.email === email && e.password === password
-    );
+    try {
+      const response = await fetch('http://localhost:5000/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (eleve) {
-      // Connexion réussie
-      router.push('/site'); // Redirection vers la page d'accueil
-    } else {
-      setError('Email ou mot de passe incorrect');
+      const data = await response.json();
+
+      if (response.ok) {
+        // Stockage des informations de l'utilisateur si nécessaire
+        localStorage.setItem('user', JSON.stringify(data.user));
+        router.push('/site');
+      } else {
+        setError(data.message || 'Erreur de connexion');
+      }
+    } catch {
+      setError('Erreur de connexion au serveur');
     }
   };
 
@@ -30,8 +41,19 @@ export default function LoginEleve() {
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full space-y-8 bg-gray-800 p-8 rounded-xl shadow-2xl">
         <div className="text-center">
+          <div className="flex justify-center mb-4">
+            <Image
+              src="/logop.png"
+              alt="Logo"
+              className="h-16 w-auto bg-amber-50"
+              width={80}
+              height={64}
+            />
+          </div>
           <h2 className="text-3xl font-bold text-white">Connexion</h2>
-          <p className="mt-2 text-sm text-gray-400">Connectez-vous à votre compte</p>
+          <p className="mt-2 text-sm text-gray-400">
+            Connectez-vous à votre compte
+          </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -40,7 +62,10 @@ export default function LoginEleve() {
           )}
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="text-sm font-medium text-gray-300">
+              <label
+                htmlFor="email"
+                className="text-sm font-medium text-gray-300"
+              >
                 Email
               </label>
               <input
@@ -58,7 +83,10 @@ export default function LoginEleve() {
             </div>
 
             <div>
-              <label htmlFor="password" className="text-sm font-medium text-gray-300">
+              <label
+                htmlFor="password"
+                className="text-sm font-medium text-gray-300"
+              >
                 Mot de passe
               </label>
               <input
@@ -90,12 +118,18 @@ export default function LoginEleve() {
 
           <div className="flex items-center justify-between">
             <div className="text-sm">
-              <Link href="#" className="font-medium text-orange-500 hover:text-orange-400">
+              <Link
+                href="#"
+                className="font-medium text-orange-500 hover:text-orange-400"
+              >
                 Mot de passe oublié?
               </Link>
             </div>
             <div className="text-sm">
-              <Link href="/auth/register" className="font-medium text-orange-500 hover:text-orange-400">
+              <Link
+                href="/eleve/loginEleve/registerEleve"
+                className="font-medium text-orange-500 hover:text-orange-400"
+              >
                 Créer un compte
               </Link>
             </div>
