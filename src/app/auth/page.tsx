@@ -42,7 +42,7 @@ export default function Auth() {
 
           <div>
             <Link
-              href="/formateur"
+              href="/formateur/loginFormateur"
               className="font-medium text-orange-500 hover:text-orange-400"
             >
               <button

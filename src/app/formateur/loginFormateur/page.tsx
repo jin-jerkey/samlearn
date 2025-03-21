@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from "next/image";
 
-export default function LoginEleve() {
+export default function LoginFormateur() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -15,7 +15,7 @@ export default function LoginEleve() {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/login', {
+      const response = await fetch('http://localhost:5000/api/formateur/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -26,9 +26,8 @@ export default function LoginEleve() {
       const data = await response.json();
 
       if (response.ok) {
-        // Stockage des informations de l'utilisateur si nécessaire
-        localStorage.setItem('user', JSON.stringify(data.user));
-        router.push('/site');
+        localStorage.setItem('formateur', JSON.stringify(data.formateur));
+        router.push('/formateur/dashboard');
       } else {
         setError(data.message || 'Erreur de connexion');
       }
@@ -125,12 +124,13 @@ export default function LoginEleve() {
                 Mot de passe oublié?
               </Link>
             </div>
+           
             <div className="text-sm">
               <Link
-                href="/eleve/loginEleve/registerEleve"
+                href="/formateur/loginFormateur/registerFormateur"
                 className="font-medium text-orange-500 hover:text-orange-400"
               >
-                Créer un compte
+                Devenir formateur
               </Link>
             </div>
           </div>
