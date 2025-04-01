@@ -14,6 +14,28 @@ interface Module {
   url?: string;
 }
 
+interface Course {
+  id: number;
+  titre: string;
+  description: string;
+  category: string;
+  difficulty_level: string;
+  duree_estimee: number;
+  created_at: string;
+}
+
+interface Exam {
+  id: number;
+  titre: string;
+  seuil_reussite: number;
+  questions: {
+    id: number;
+    question: string;
+    options: string[];
+    points: number;
+  }[];
+}
+
 export default function ModuleCourFormateur() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [formateurData, setFormateurData] = useState(null);
@@ -26,6 +48,8 @@ export default function ModuleCourFormateur() {
     ordre: 1,
     fichier: null as File | null
   });
+  const [courseInfo, setCourseInfo] = useState<Course | null>(null);
+  const [examens, setExamens] = useState<Exam[]>([]);
   
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -56,6 +80,41 @@ export default function ModuleCourFormateur() {
 
     if (coursId) {
       loadModules();
+    }
+  }, [coursId]);
+
+  useEffect(() => {
+    const fetchCourseInfo = async () => {
+      if (!coursId) return;
+      try {
+        const response = await fetch(`http://localhost:5000/api/cours/${coursId}`);
+        const data = await response.json();
+        if (data.status === 'success') {
+          setCourseInfo(data.course);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des informations du cours:', error);
+      }
+    };
+
+    fetchCourseInfo();
+  }, [coursId]);
+
+  useEffect(() => {
+    const loadExams = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/examens/cours/${coursId}`);
+        const data = await response.json();
+        if (data.status === 'success') {
+          setExamens(data.exams);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des examens:', error);
+      }
+    };
+
+    if (coursId) {
+      loadExams();
     }
   }, [coursId]);
 
@@ -109,7 +168,7 @@ export default function ModuleCourFormateur() {
         return (
           <div className="h-[400px] w-full">
             <object
-              data={`http://localhost:5000/uploads/${module.contenu}`}
+              data={`http://localhost:5000/${module.contenu}`}
               type="application/pdf"
               className="w-full h-full"
             >
@@ -153,16 +212,56 @@ export default function ModuleCourFormateur() {
           <div className="container mx-auto">
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-2xl font-bold text-gray-800">Modules du cours</h1>
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
-              >
-                Ajouter un module
-              </button>
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
+                >
+                  Ajouter un module
+                </button>
+                <button
+                  onClick={() => router.push(`/formateur/cour/examen?cours_id=${coursId}`)}
+                  className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+                >
+                  Ajouter un examen
+                </button>
+              </div>
             </div>
 
+            {/* Résumé du cours lié au module */}
+            {courseInfo && (
+              <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900 mb-4">{courseInfo.titre}</h2>
+                    <p className="text-gray-600 mb-4 line-clamp-3">{courseInfo.description}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-500">Catégorie</p>
+                      <p className="font-medium text-gray-900">{courseInfo.category}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Niveau</p>
+                      <p className="font-medium text-gray-900">{courseInfo.difficulty_level}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Durée estimée</p>
+                      <p className="font-medium text-gray-900">{courseInfo.duree_estimee} min</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Créé le</p>
+                      <p className="font-medium text-gray-900">
+                        {new Date(courseInfo.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Liste des modules */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
               {modules.map((module) => (
                 <div
                   key={module.id}
@@ -182,9 +281,55 @@ export default function ModuleCourFormateur() {
               ))}
             </div>
 
+            {/* Section Examens et Quiz */}
+            <div className="bg-white rounded-lg shadow-sm p-6 mt-8">
+              <h2 className="text-xl font-bold text-gray-800 mb-6">Examens du cours</h2>
+              
+              <div className="grid grid-cols-2 lg:grid-cols-2 gap-6">
+                {examens.map((examen) => (
+                  <div key={examen.id} className="bg-gray-50 rounded-lg p-6">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold">{examen.titre}</h3>
+                      <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">
+                        Seuil: {examen.seuil_reussite}%
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      {examen.questions.map((question, idx) => (
+                        <div key={question.id} className="bg-white p-4 rounded-lg border border-gray-200">
+                          <div className="flex justify-between items-start mb-2">
+                            <p className="font-medium">Question {idx + 1}</p>
+                            <span className="text-sm text-gray-500">{question.points} pts</span>
+                          </div>
+                          <p className="text-gray-700 mb-2">{question.question}</p>
+                          <div className="space-y-2">
+                            {question.options.map((option, optIdx) => (
+                              <div key={optIdx} className="flex items-center space-x-2">
+                                <span className="w-6 h-6 flex items-center justify-center bg-gray-100 rounded-full text-sm">
+                                  {String.fromCharCode(65 + optIdx)}
+                                </span>
+                                <span className="text-gray-600">{option}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {examens.length === 0 && (
+                <div className="text-center text-gray-500 py-8">
+                  Aucun examen n&apos;a été créé pour ce cours.
+                </div>
+              )}
+            </div>
+
             {/* Modal de création de module */}
             {isModalOpen && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+              <div className="fixed inset-0 bg-gray-50 bg-opacity-10 flex items-center justify-center">
                 <div className="bg-white rounded-lg p-6 w-full max-w-xl">
                   <h2 className="text-xl font-bold mb-4">Nouveau module</h2>
                   <form onSubmit={handleSubmit} className="space-y-4">

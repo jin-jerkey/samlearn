@@ -28,7 +28,7 @@ export default function LoginEleve() {
       if (response.ok) {
         // Stockage des informations de l'utilisateur si nécessaire
         localStorage.setItem('user', JSON.stringify(data.user));
-        router.push('/site');
+        router.push('/eleve/dashboard');
       } else {
         setError(data.message || 'Erreur de connexion');
       }
@@ -52,7 +52,7 @@ export default function LoginEleve() {
           </div>
           <h2 className="text-3xl font-bold text-white">Connexion</h2>
           <p className="mt-2 text-sm text-gray-400">
-            Connectez-vous à votre compte
+            Connectez-vous en tant que élève
           </p>
         </div>
 
