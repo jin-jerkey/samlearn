@@ -11,7 +11,7 @@ from werkzeug.utils import secure_filename
 app = Flask(__name__)
 CORS(app)
 
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = '../public/uploads'  # Chemin relatif vers le dossier public/uploads
 ALLOWED_EXTENSIONS = {'pdf', 'mp4', 'webm'}
 
 if not os.path.exists(UPLOAD_FOLDER):
@@ -363,6 +363,48 @@ def get_formateur_courses():
 
     return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
 
+# Route pour récupérer les statistiques des cours d'un formateur
+@app.route('/api/formateur/cours/stats/<formateur_id>', methods=['GET'])
+def get_formateur_course_stats(formateur_id):
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            query = """
+                SELECT 
+                    c.*,
+                    COUNT(DISTINCT ec.eleve_id) as nb_eleves,
+                    COUNT(DISTINCT com.id) as nb_commentaires
+                FROM cours c
+                LEFT JOIN eleve_cours ec ON c.id = ec.cours_id
+                LEFT JOIN commentaires com ON c.id = com.cours_id
+                WHERE c.formateur_id = %s
+                GROUP BY c.id
+                ORDER BY c.created_at DESC
+            """
+            cursor.execute(query, (formateur_id,))
+            courses = cursor.fetchall()
+
+            # Convertir les champs JSON en objets Python
+            for course in courses:
+                if course.get('prerequis'):
+                    course['prerequis'] = json.loads(course['prerequis'])
+                if course.get('mots_cles'):
+                    course['mots_cles'] = json.loads(course['mots_cles'])
+
+            return jsonify({
+                "status": "success",
+                "courses": courses
+            })
+
+        except Error as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
+
+    return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
+
 # Route pour créer un module
 @app.route('/api/module/create', methods=['POST'])
 def create_module():
@@ -386,7 +428,8 @@ def create_module():
             filename = secure_filename(file.filename)
             file_path = os.path.join(UPLOAD_FOLDER, filename)
             file.save(file_path)
-            contenu = file_path
+            # Stocker seulement le nom du fichier dans la base de données
+            contenu = filename  # Au lieu du chemin complet
 
     connection = create_db_connection()
     if connection:
@@ -512,7 +555,7 @@ def create_exam():
             
             exam_id = cursor.lastrowid
             
-            # Créer les questions du quiz
+            # Créer les questions du quiz avec les réponses correctes
             quiz_query = """
                 INSERT INTO quizzes (examen_id, question, options, reponse_correcte, points)
                 VALUES (%s, %s, %s, %s, %s)
@@ -523,7 +566,7 @@ def create_exam():
                     exam_id,
                     question['question'],
                     json.dumps(question['options']),
-                    json.dumps(question['reponse_correcte']),
+                    json.dumps(question['reponse_correcte']),  # Stocke les index des réponses correctes
                     question.get('points', 1)
                 ))
             
@@ -540,7 +583,7 @@ def create_exam():
         finally:
             cursor.close()
             connection.close()
-    
+
     return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
 
 # Route pour récupérer les examens d'un cours
@@ -865,7 +908,6 @@ def participer_cours():
 
     return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
 
-
 # Route pour récupérer les cours d'un élève
 @app.route('/api/eleve/<eleve_id>/cours', methods=['GET'])
 def get_eleve_courses(eleve_id):
@@ -873,45 +915,141 @@ def get_eleve_courses(eleve_id):
     if connection:
         try:
             cursor = connection.cursor(dictionary=True)
+            
+            # Requête simplifiée sans la progression pour l'instant
             query = """
-                SELECT c.*, 
-                       f.nom as formateur_nom, 
-                       f.prenom as formateur_prenom,
-                       ec.est_termine,
-                       (
-                           SELECT COUNT(*) * 100.0 / (
-                               SELECT COUNT(*) 
-                               FROM modules 
-                               WHERE cours_id = c.id
-                           )
-                           FROM eleve_progression ep
-                           JOIN modules m ON ep.module_id = m.id
-                           WHERE ep.eleve_id = ec.eleve_id 
-                           AND m.cours_id = c.id 
-                           AND ep.est_termine = 1
-                       ) as progression
-                FROM cours c
+                SELECT 
+                    c.*,
+                    f.nom as formateur_nom,
+                    f.prenom as formateur_prenom,
+                    ec.est_termine,
+                    ec.date_inscription,
+                    0 as progression
+                FROM eleve_cours ec
+                JOIN cours c ON ec.cours_id = c.id
                 JOIN formateur f ON c.formateur_id = f.id
-                JOIN eleve_cours ec ON c.id = ec.cours_id
                 WHERE ec.eleve_id = %s
                 ORDER BY ec.date_inscription DESC
             """
+            
             cursor.execute(query, (eleve_id,))
             courses = cursor.fetchall()
 
-            # Convertir les champs JSON en objets Python
+            # Vérifier si la table eleve_progression existe
+            try:
+                progression_query = """
+                    SELECT 
+                        m.cours_id,
+                        COUNT(ep.id) * 100.0 / COUNT(m.id) as progression
+                    FROM modules m
+                    LEFT JOIN eleve_progression ep ON m.id = ep.module_id AND ep.eleve_id = %s AND ep.est_termine = 1
+                    GROUP BY m.cours_id
+                """
+                cursor.execute(progression_query, (eleve_id,))
+                progressions = {row['cours_id']: row['progression'] for row in cursor.fetchall()}
+                
+                # Mettre à jour la progression pour chaque cours
+                for course in courses:
+                    if course['id'] in progressions:
+                        course['progression'] = round(float(progressions[course['id']] or 0), 2)
+            except Error:
+                # Si la table n'existe pas, on laisse la progression à 0
+                pass
+
+            # Formater les données
+            formatted_courses = []
             for course in courses:
-                if course.get('prerequis'):
-                    course['prerequis'] = json.loads(course['prerequis'])
-                if course.get('mots_cles'):
-                    course['mots_cles'] = json.loads(course['mots_cles'])
-                # Arrondir la progression à 2 décimales
-                if course['progression'] is not None:
-                    course['progression'] = round(float(course['progression']), 2)
+                course_dict = dict(course)
+                if course_dict.get('prerequis'):
+                    course_dict['prerequis'] = json.loads(course_dict['prerequis'])
+                if course_dict.get('mots_cles'):
+                    course_dict['mots_cles'] = json.loads(course_dict['mots_cles'])
+                formatted_courses.append(course_dict)
 
             return jsonify({
                 "status": "success",
-                "courses": courses
+                "courses": formatted_courses
+            })
+
+        except Error as e:
+            print(f"Database error: {str(e)}")
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
+
+    return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
+
+# Route pour récupérer la progression d'un élève dans un module
+@app.route('/api/module/progress/<cours_id>/<eleve_id>', methods=['GET'])
+def get_module_progress(cours_id, eleve_id):
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            query = """
+                SELECT module_id, est_complete
+                FROM eleve_module_progression
+                WHERE eleve_id = %s
+                AND module_id IN (
+                    SELECT id FROM modules WHERE cours_id = %s
+                )
+            """
+            cursor.execute(query, (eleve_id, cours_id))
+            progress = cursor.fetchall()
+            
+            return jsonify({
+                "status": "success",
+                "progress": progress
+            })
+        except Error as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
+
+
+# Route pour marquer un module comme terminé
+@app.route('/api/module/complete', methods=['POST'])
+def complete_module():
+    data = request.json
+    if not all(k in data for k in ('eleve_id', 'module_id')):
+        return jsonify({"status": "error", "message": "Données manquantes"}), 400
+
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            
+            # Vérifie si un enregistrement existe déjà
+            check_query = """
+                SELECT id FROM eleve_module_progression
+                WHERE eleve_id = %s AND module_id = %s
+            """
+            cursor.execute(check_query, (data['eleve_id'], data['module_id']))
+            existing = cursor.fetchone()
+
+            if existing:
+                # Mise à jour
+                query = """
+                    UPDATE eleve_module_progression
+                    SET est_complete = 1, date_completion = CURRENT_TIMESTAMP
+                    WHERE eleve_id = %s AND module_id = %s
+                """
+            else:
+                # Création
+                query = """
+                    INSERT INTO eleve_module_progression 
+                    (eleve_id, module_id, est_complete, date_debut, date_completion)
+                    VALUES (%s, %s, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                """
+
+            cursor.execute(query, (data['eleve_id'], data['module_id']))
+            connection.commit()
+
+            return jsonify({
+                "status": "success",
+                "message": "Progression mise à jour"
             })
 
         except Error as e:
@@ -920,7 +1058,569 @@ def get_eleve_courses(eleve_id):
             cursor.close()
             connection.close()
 
+            
+# Route pour soumettre un examen
+@app.route('/api/examen/submit', methods=['POST', 'OPTIONS'])
+def submit_exam():
+    if request.method == 'OPTIONS':
+        response = app.make_default_options_response()
+        response.headers['Access-Control-Allow-Methods'] = 'POST'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return response
+
+    data = request.json
+    if not all(k in data for k in ('eleve_id', 'examen_id', 'reponses')):
+        return jsonify({"status": "error", "message": "Données manquantes"}), 400
+
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+
+            # 1. Récupérer les questions et les réponses correctes
+            cursor.execute("""
+                SELECT q.id, q.points, q.reponse_correcte
+                FROM quizzes q
+                WHERE q.examen_id = %s
+            """, (data['examen_id'],))
+            questions = cursor.fetchall()
+
+            # 2. Calculer le score
+            total_points = sum(q['points'] for q in questions)
+            points_obtenus = 0
+
+            # Créer l'entrée dans eleve_examen_resultats
+            cursor.execute("""
+                INSERT INTO eleve_examen_resultats 
+                (eleve_id, examen_id, date_passage)
+                VALUES (%s, %s, CURRENT_TIMESTAMP)
+            """, (data['eleve_id'], data['examen_id']))
+            resultat_id = cursor.lastrowid
+
+            # 3. Vérifier chaque réponse
+            for question in questions:
+                reponse_donnee = data['reponses'].get(str(question['id']), [])
+                reponse_correcte = json.loads(question['reponse_correcte'])
+                est_correcte = set(reponse_donnee) == set(reponse_correcte)
+
+                if est_correcte:
+                    points_obtenus += question['points']
+
+                # Enregistrer la réponse
+                cursor.execute("""
+                    INSERT INTO eleve_quiz_reponses 
+                    (eleve_id, quiz_id, examen_resultat_id, reponse_donnee, est_correcte)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, (
+                    data['eleve_id'], 
+                    question['id'], 
+                    resultat_id,
+                    json.dumps(reponse_donnee),
+                    est_correcte
+                ))
+
+            # 4. Calculer le pourcentage et mettre à jour le résultat
+            score = (points_obtenus / total_points * 100) if total_points > 0 else 0
+            est_reussi = score >= data.get('seuil_reussite', 50)
+
+            cursor.execute("""
+                UPDATE eleve_examen_resultats 
+                SET score = %s, est_reussi = %s
+                WHERE id = %s
+            """, (score, est_reussi, resultat_id))
+
+            # 5. Si réussi, marquer le cours comme terminé
+            if est_reussi:
+                cursor.execute("""
+                    UPDATE eleve_cours 
+                    SET est_termine = 1 
+                    WHERE eleve_id = %s AND cours_id = (
+                        SELECT cours_id FROM examens WHERE id = %s
+                    )
+                """, (data['eleve_id'], data['examen_id']))
+
+            connection.commit()
+
+            return jsonify({
+                "status": "success",
+                "result": {
+                    "score": round(score, 2),
+                    "est_reussi": est_reussi
+                }
+            })
+
+        except Error as e:
+            connection.rollback()
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
+
+# Route pour ajouter un commentaire
+@app.route('/api/commentaire/create', methods=['POST'])
+def create_comment():
+    data = request.json
+    required_fields = ['eleve_id', 'cours_id', 'contenu', 'note']
+    
+    if not all(field in data for field in required_fields):
+        return jsonify({"status": "error", "message": "Données manquantes"}), 400
+
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            
+            # Vérifier si l'élève a déjà terminé le cours
+            cursor.execute("""
+                SELECT est_termine 
+                FROM eleve_cours 
+                WHERE eleve_id = %s AND cours_id = %s
+            """, (data['eleve_id'], data['cours_id']))
+            
+            cours_status = cursor.fetchone()
+            if not cours_status or not cours_status['est_termine']:
+                return jsonify({
+                    "status": "error",
+                    "message": "Vous devez terminer le cours avant de pouvoir le commenter"
+                }), 403
+            
+            # Ajouter le commentaire
+            query = """
+                INSERT INTO commentaires (eleve_id, cours_id, contenu, note)
+                VALUES (%s, %s, %s, %s)
+            """
+            
+            cursor.execute(query, (
+                data['eleve_id'],
+                data['cours_id'],
+                data['contenu'],
+                data['note']
+            ))
+            
+            connection.commit()
+            return jsonify({
+                "status": "success",
+                "message": "Commentaire ajouté avec succès"
+            }), 201
+            
+        except Error as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
+
     return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
+
+# Route pour récupérer les commentaires d'un cours
+@app.route('/api/commentaires/cours/<cours_id>', methods=['GET'])
+def get_course_comments(cours_id):
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            
+            # Récupérer les commentaires avec les informations de l'élève
+            comments_query = """
+                SELECT 
+                    c.*,
+                    e.nom,
+                    e.prenom,
+                    e.email
+                FROM commentaires c
+                JOIN eleve e ON c.eleve_id = e.id
+                WHERE c.cours_id = %s
+                ORDER BY c.created_at DESC
+            """
+            cursor.execute(comments_query, (cours_id,))
+            comments = cursor.fetchall()
+
+            # Pour chaque commentaire, récupérer les réponses avec les informations du formateur
+            for comment in comments:
+                responses_query = """
+                    SELECT 
+                        r.*,
+                        f.nom as formateur_nom,
+                        f.prenom as formateur_prenom
+                    FROM reponsecommentaires r
+                    JOIN formateur f ON r.formateur_id = f.id
+                    WHERE r.commentaire_id = %s
+                    ORDER BY r.created_at ASC
+                """
+                cursor.execute(responses_query, (comment['id'],))
+                comment['responses'] = cursor.fetchall()
+
+            return jsonify({
+                "status": "success",
+                "comments": comments
+            })
+            
+        except Error as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
+
+    return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
+
+# Route pour créer une réponse à un commentaire
+@app.route('/api/reponsecommentaire/create', methods=['POST'])
+def create_comment_response():
+    data = request.json
+    required_fields = ['formateur_id', 'commentaire_id', 'contenu']
+    
+    if not all(field in data for field in required_fields):
+        return jsonify({"status": "error", "message": "Données manquantes"}), 400
+
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            
+            # Ajouter la réponse
+            query = """
+                INSERT INTO reponsecommentaires (formateur_id, commentaire_id, contenu)
+                VALUES (%s, %s, %s)
+            """
+            
+            cursor.execute(query, (
+                data['formateur_id'],
+                data['commentaire_id'],
+                data['contenu']
+            ))
+            
+            connection.commit()
+            return jsonify({
+                "status": "success",
+                "message": "Réponse ajoutée avec succès"
+            }), 201
+            
+        except Error as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
+
+    return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
+
+# Route pour récupérer les réponses d'un commentaire
+@app.route('/api/reponsecommentaires/<commentaire_id>', methods=['GET'])
+def get_comment_responses(commentaire_id):
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            
+            query = """
+                SELECT r.*, f.nom, f.prenom
+                FROM reponsecommentaires r
+                JOIN formateur f ON r.formateur_id = f.id
+                WHERE r.commentaire_id = %s
+                ORDER BY r.created_at ASC
+            """
+            cursor.execute(query, (commentaire_id,))
+            responses = cursor.fetchall()
+            
+            return jsonify({
+                "status": "success",
+                "responses": responses
+            })
+            
+        except Error as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
+
+    return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
+
+# Route pour récupérer les statistiques d'un élève
+@app.route('/api/eleve/<eleve_id>/stats', methods=['GET'])
+def get_eleve_stats(eleve_id):
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            
+            # Récupérer les statistiques
+            stats = {
+                'totalCours': 0,
+                'coursTermines': 0,
+                'coursEnCours': 0,
+                'examensReussis': 0,
+                'totalExamens': 0,
+                'tauxReussite': 0
+            }
+            
+            # Compter les cours
+            cursor.execute("""
+                SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN est_termine = 1 THEN 1 ELSE 0 END) as termines
+                FROM eleve_cours
+                WHERE eleve_id = %s
+            """, (eleve_id,))
+            cours_stats = cursor.fetchone()
+            
+            if cours_stats:
+                stats['totalCours'] = cours_stats['total'] or 0
+                stats['coursTermines'] = cours_stats['termines'] or 0
+                stats['coursEnCours'] = stats['totalCours'] - stats['coursTermines']
+            
+            # Compter les examens
+            cursor.execute("""
+                SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN est_reussi = 1 THEN 1 ELSE 0 END) as reussis
+                FROM eleve_examen_resultats
+                WHERE eleve_id = %s
+            """, (eleve_id,))
+            exam_stats = cursor.fetchone()
+            
+            if exam_stats:
+                stats['totalExamens'] = exam_stats['total'] or 0
+                stats['examensReussis'] = exam_stats['reussis'] or 0
+                stats['tauxReussite'] = round((stats['examensReussis'] / stats['totalExamens'] * 100) 
+                                            if stats['totalExamens'] > 0 else 0, 2)
+            
+            return jsonify({
+                "status": "success",
+                "stats": stats
+            })
+            
+        except Error as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
+    
+    return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
+
+# Route pour mettre à jour les informations de l'élève
+@app.route('/api/eleve/update/<eleve_id>', methods=['PUT'])
+def update_eleve(eleve_id):
+    data = request.json
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            
+            # Construire la requête de mise à jour dynamiquement
+            fields = []
+            values = []
+            for key, value in data.items():
+                if key not in ['id', 'password', 'password_hash']:
+                    fields.append(f"{key} = %s")
+                    values.append(value)
+            
+            values.append(eleve_id)
+            query = f"""
+                UPDATE eleve 
+                SET {', '.join(fields)}
+                WHERE id = %s
+            """
+            
+            cursor.execute(query, values)
+            connection.commit()
+            
+            # Récupérer les informations mises à jour
+            cursor.execute("""
+                SELECT id, nom, prenom, email, niveau
+                FROM eleve
+                WHERE id = %s
+            """, (eleve_id,))
+            
+            updated_eleve = cursor.fetchone()
+            
+            return jsonify({
+                "status": "success",
+                "message": "Profil mis à jour avec succès",
+                "user": updated_eleve
+            })
+            
+        except Error as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
+    
+    return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
+
+# Route pour changer le mot de passe de l'élève
+@app.route('/api/eleve/password/<eleve_id>', methods=['PUT'])
+def update_eleve_password(eleve_id):
+    data = request.json
+    if not all(k in data for k in ('currentPassword', 'newPassword')):
+        return jsonify({"status": "error", "message": "Données manquantes"}), 400
+
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            
+            # Vérifier l'ancien mot de passe
+            cursor.execute("SELECT password_hash FROM eleve WHERE id = %s", (eleve_id,))
+            eleve = cursor.fetchone()
+            
+            if not eleve or not check_password_hash(eleve['password_hash'], data['currentPassword']):
+                return jsonify({"status": "error", "message": "Mot de passe actuel incorrect"}), 401
+            
+            # Mettre à jour avec le nouveau mot de passe
+            new_password_hash = generate_password_hash(data['newPassword'])
+            cursor.execute(
+                "UPDATE eleve SET password_hash = %s WHERE id = %s",
+                (new_password_hash, eleve_id)
+            )
+            connection.commit()
+            
+            return jsonify({
+                "status": "success",
+                "message": "Mot de passe mis à jour avec succès"
+            })
+            
+        except Error as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
+    
+    return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
+
+# Route pour récupérer les détails d'un cours avec les modules et l'examen
+@app.route('/api/cours/details/<cours_id>', methods=['GET'])
+def get_course_with_modules(cours_id):
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            
+            # Récupérer les informations du cours
+            course_query = """
+                SELECT c.*, f.nom as formateur_nom, f.prenom as formateur_prenom
+                FROM cours c
+                JOIN formateur f ON c.formateur_id = f.id
+                WHERE c.id = %s
+            """
+            cursor.execute(course_query, (cours_id,))
+            course = cursor.fetchone()
+
+            if not course:
+                return jsonify({"status": "error", "message": "Cours non trouvé"}), 404
+
+            # Récupérer les modules
+            modules_query = """
+                SELECT id, titre, type, ordre
+                FROM modules
+                WHERE cours_id = %s
+                ORDER BY ordre ASC
+            """
+            cursor.execute(modules_query, (cours_id,))
+            modules = cursor.fetchall()
+
+            # Récupérer l'examen
+            exam_query = """
+                SELECT id, titre, seuil_reussite
+                FROM examens
+                WHERE cours_id = %s
+            """
+            cursor.execute(exam_query, (cours_id,))
+            exam = cursor.fetchone()
+
+            # Construire la réponse
+            course['modules'] = modules
+            course['examen'] = exam
+
+            return jsonify({
+                "status": "success",
+                "course": course
+            })
+
+        except Error as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
+
+# Route pour récupérer les élèves d'un cours
+@app.route('/api/cours/<cours_id>/eleves', methods=['GET'])
+def get_course_students(cours_id):
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            query = """
+                SELECT 
+                    e.id,
+                    e.nom,
+                    e.prenom,
+                    ec.est_termine,
+                    CASE WHEN er.est_reussi = 1 THEN true ELSE false END as examen_complete
+                FROM eleve e
+                JOIN eleve_cours ec ON e.id = ec.eleve_id
+                LEFT JOIN examens ex ON ex.cours_id = ec.cours_id
+                LEFT JOIN eleve_examen_resultats er ON er.examen_id = ex.id AND er.eleve_id = e.id
+                WHERE ec.cours_id = %s
+                ORDER BY e.nom, e.prenom
+            """
+            cursor.execute(query, (cours_id,))
+            students = cursor.fetchall()
+
+            return jsonify({
+                "status": "success",
+                "students": students
+            })
+
+        except Error as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
+# Route pour récupérer les commentaires d'un cours avec les réponses
+@app.route('/api/cours/<cours_id>/comments', methods=['GET'])
+def get_course_comments_with_responses(cours_id):
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            
+            # Récupérer les commentaires avec les informations de l'élève
+            comments_query = """
+                SELECT 
+                    c.*,
+                    e.nom,
+                    e.prenom
+                FROM commentaires c
+                JOIN eleve e ON c.eleve_id = e.id
+                WHERE c.cours_id = %s
+                ORDER BY c.created_at DESC
+            """
+            cursor.execute(comments_query, (cours_id,))
+            comments = cursor.fetchall()
+
+            # Pour chaque commentaire, récupérer les réponses
+            for comment in comments:
+                responses_query = """
+                    SELECT 
+                        r.*,
+                        f.nom,
+                        f.prenom
+                    FROM reponsecommentaires r
+                    JOIN formateur f ON r.formateur_id = f.id
+                    WHERE r.commentaire_id = %s
+                    ORDER BY r.created_at ASC
+                """
+                cursor.execute(responses_query, (comment['id'],))
+                comment['responses'] = cursor.fetchall()
+
+            return jsonify({
+                "status": "success",
+                "comments": comments
+            })
+
+        except Error as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
 
 if __name__ == '__main__':
     # Démarrer le serveur sur le port 5000

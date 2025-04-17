@@ -7,7 +7,7 @@ import Sidebar from '../../component/Sidebar';
 interface QuizQuestion {
   question: string;
   options: string[];
-  reponse_correcte: string[];
+  reponse_correcte: number[];
   points: number;
 }
 
@@ -63,6 +63,10 @@ export default function ExamenPage() {
   };
 
   const addQuestion = () => {
+    if (!currentQuestion.question || currentQuestion.options.some(opt => !opt) || currentQuestion.reponse_correcte.length === 0) {
+      alert('Veuillez remplir tous les champs et sélectionner au moins une réponse correcte');
+      return;
+    }
     setQuestions([...questions, currentQuestion]);
     setCurrentQuestion({
       question: '',
@@ -70,6 +74,19 @@ export default function ExamenPage() {
       reponse_correcte: [],
       points: 1
     });
+  };
+
+  const handleOptionChange = (index: number, value: string) => {
+    const newOptions = [...currentQuestion.options];
+    newOptions[index] = value;
+    setCurrentQuestion({ ...currentQuestion, options: newOptions });
+  };
+
+  const toggleCorrectAnswer = (index: number) => {
+    const newCorrectAnswers = currentQuestion.reponse_correcte.includes(index)
+      ? currentQuestion.reponse_correcte.filter(i => i !== index)
+      : [...currentQuestion.reponse_correcte, index];
+    setCurrentQuestion({ ...currentQuestion, reponse_correcte: newCorrectAnswers });
   };
 
   return (
@@ -136,18 +153,20 @@ export default function ExamenPage() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Options</label>
+                        <label className="block text-sm font-medium mb-1">Options et Réponses</label>
                         {currentQuestion.options.map((option, idx) => (
-                          <div key={idx} className="mt-2">
+                          <div key={idx} className="flex items-center space-x-2 mt-2">
+                            <input
+                              type="checkbox"
+                              checked={currentQuestion.reponse_correcte.includes(idx)}
+                              onChange={() => toggleCorrectAnswer(idx)}
+                              className="w-4 h-4 text-orange-600"
+                            />
                             <input
                               type="text"
                               value={option}
-                              onChange={(e) => {
-                                const newOptions = [...currentQuestion.options];
-                                newOptions[idx] = e.target.value;
-                                setCurrentQuestion({...currentQuestion, options: newOptions});
-                              }}
-                              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                              onChange={(e) => handleOptionChange(idx, e.target.value)}
+                              className="flex-1 border rounded-lg p-2"
                               placeholder={`Option ${idx + 1}`}
                             />
                           </div>
@@ -175,6 +194,26 @@ export default function ExamenPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <div className="mt-6 space-y-4">
+                {questions.map((q, idx) => (
+                  <div key={idx} className="p-4 border rounded-lg bg-gray-50">
+                    <p className="font-medium">Question {idx + 1}: {q.question}</p>
+                    <div className="mt-2 space-y-1">
+                      {q.options.map((opt, optIdx) => (
+                        <div key={optIdx} className="flex items-center space-x-2">
+                          <span className={`w-4 h-4 inline-block ${
+                            q.reponse_correcte.includes(optIdx) 
+                              ? 'bg-green-500' 
+                              : 'bg-gray-200'
+                          } rounded-full`}></span>
+                          <span>{opt}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className="flex justify-end space-x-4">

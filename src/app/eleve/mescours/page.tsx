@@ -84,7 +84,7 @@ export default function MesCoursEleve() {
                   <div
                     key={course.id}
                     className="bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer"
-                    onClick={() => router.push(`/eleve/cours/${course.id}`)}
+                    onClick={() => router.push(`/eleve/mescours/faireCour?cours_id=${course.id}`)}
                   >
                     <div className="relative pt-[56.25%]">
                       <Image
