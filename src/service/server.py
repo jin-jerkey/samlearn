@@ -8,6 +8,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from werkzeug.utils import secure_filename
 
+ 
+from ml.course_chatbot import CourseChatbot
+
 app = Flask(__name__)
 CORS(app)
 
@@ -37,6 +40,10 @@ def create_db_connection():
     except Error as e:
         print(f"Erreur lors de la connexion à MySQL: {e}")
         return None
+
+# Initialiser les modèles
+ 
+chatbot = CourseChatbot()
 
 # Route exemple pour la page d'accueil
 @app.route('/')
@@ -718,6 +725,8 @@ def update_formateur_password(formateur_id):
         finally:
             cursor.close()
             connection.close()
+    
+    return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
 
 # Route pour récupérer les cours disponibles
 @app.route('/api/cours/disponibles', methods=['GET'])
@@ -1155,6 +1164,8 @@ def submit_exam():
         finally:
             cursor.close()
             connection.close()
+
+    return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
 
 # Route pour ajouter un commentaire
 @app.route('/api/commentaire/create', methods=['POST'])
@@ -1621,6 +1632,76 @@ def get_course_comments_with_responses(cours_id):
         finally:
             cursor.close()
             connection.close()
+
+    return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
+
+ 
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            
+            # Récupérer l'historique de l'élève
+            cursor.execute("""
+                SELECT c.* 
+                FROM cours c
+                JOIN eleve_cours ec ON c.id = ec.cours_id
+                WHERE ec.eleve_id = %s
+            """, (eleve_id,))
+            
+            user_history = cursor.fetchall()
+            
+            # Récupérer tous les cours disponibles
+            cursor.execute("SELECT * FROM cours")
+            all_courses = cursor.fetchall()
+            
+            # Préparer et obtenir les recommandations
+            recommender.prepare_features(all_courses)
+            recommendations = recommender.get_recommendations(eleve_id, user_history)
+            
+            return jsonify({
+                "status": "success",
+                "recommendations": recommendations
+            })
+            
+        except Error as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
+
+# Route pour le chatbot
+@app.route('/api/chatbot/query', methods=['POST'])
+def chatbot_query():
+    try:
+        data = request.json
+        if not data or 'question' not in data:
+            return jsonify({
+                "status": "error",
+                "message": "Question manquante"
+            }), 400
+
+        try:
+            # Appel direct au chatbot
+            response = chatbot.get_response(data['question'])
+            
+            return jsonify({
+                "status": "success",
+                "response": response
+            })
+        except Exception as e:
+            print(f"Erreur du chatbot: {str(e)}")
+            return jsonify({
+                "status": "error",
+                "message": "Le service de chat est temporairement indisponible"
+            }), 503
+
+    except Exception as e:
+        print(f"Erreur inattendue: {str(e)}")
+        return jsonify({
+            "status": "error",
+            "message": "Une erreur inattendue s'est produite"
+        }), 500
 
 if __name__ == '__main__':
     # Démarrer le serveur sur le port 5000

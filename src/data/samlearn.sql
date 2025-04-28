@@ -321,6 +321,25 @@ CREATE TABLE `reponsecommentaires` (
   `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- --------------------------------------------------------
+
+--
+-- Table pour les conversations du chatbot
+--
+CREATE TABLE `chatbot_conversations` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `eleve_id` int(11) NOT NULL,
+  `cours_id` int(11) NOT NULL,
+  `question` text NOT NULL,
+  `reponse` text NOT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `eleve_id` (`eleve_id`),
+  KEY `cours_id` (`cours_id`),
+  CONSTRAINT `chatbot_conversations_ibfk_1` FOREIGN KEY (`eleve_id`) REFERENCES `eleve` (`id`),
+  CONSTRAINT `chatbot_conversations_ibfk_2` FOREIGN KEY (`cours_id`) REFERENCES `cours` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 --
 -- Indexes for dumped tables
 --
