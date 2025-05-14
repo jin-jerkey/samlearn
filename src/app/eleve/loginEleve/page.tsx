@@ -3,11 +3,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Image from "next/image";
+// Importez les icônes d'œil
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export default function LoginEleve() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,25 +85,34 @@ export default function LoginEleve() {
               />
             </div>
 
-            <div>
-              <label
-                htmlFor="password"
-                className="text-sm font-medium text-gray-300"
-              >
+            <div className="relative">
+              <label htmlFor="password" className="text-sm font-medium text-gray-300">
                 Mot de passe
               </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white 
-                          placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 
-                          focus:border-transparent transition duration-150"
-                placeholder="••••••••"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white 
+                            placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 
+                            focus:border-transparent transition duration-150 pr-10"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 mt-1 pr-3 flex items-center text-gray-400 hover:text-white"
+                >
+                  {showPassword ? 
+                    <FaEyeSlash className="h-5 w-5" /> : 
+                    <FaEye className="h-5 w-5" />
+                  }
+                </button>
+              </div>
             </div>
           </div>
 

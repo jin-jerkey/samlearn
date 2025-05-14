@@ -65,6 +65,7 @@ export default function FaireCour() {
   const [rating, setRating] = useState(5);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isChatbotVisible, setIsChatbotVisible] = useState(false);
+  const [courseContext, setCourseContext] = useState<string>("");
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -145,6 +146,19 @@ export default function FaireCour() {
 
     loadComments();
   }, [coursId]);
+
+  useEffect(() => {
+    if (modules.length > 0) {
+      // Construire le contexte à partir des modules texte
+      const textModules = modules
+        .filter(m => m.type === "texte")
+        .map(m => m.contenu)
+        .join("\n\n");
+      
+      const context = `Informations du cours "${courseData?.titre}":\n${textModules}`;
+      setCourseContext(context);
+    }
+  }, [modules, courseData]);
 
   const handleModuleComplete = async (moduleId: number) => {
     if (!eleveData?.id) return;
@@ -538,7 +552,10 @@ export default function FaireCour() {
           )}
         </main>
         {isChatbotVisible && eleveData && (
-          <CourseChatbot userId={eleveData.id.toString()} />
+          <CourseChatbot 
+            userId={eleveData.id.toString()} 
+            courseContext={courseContext}
+          />
         )}
       </div>
     </div>

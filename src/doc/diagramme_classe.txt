@@ -1,0 +1,165 @@
+DIAGRAMME DE CLASSES - SAMLEARN
+==============================
+
+1. UTILISATEURS
+--------------
++-------------------+
+|      Eleve        |
++-------------------+
+| - id: int         |
+| - nom: string     |
+| - prenom: string  |
+| - email: string   |
+| - niveau: string  |
+| - password: string|
++-------------------+
+| + inscription()   |
+| + connexion()     |
+| + suivreCours()   |
+| + passerExamen()  |
++-------------------+
+          ↑
+          |
++-------------------+
+|    Formateur     |
++-------------------+
+| - id: int         |
+| - nom: string     |
+| - prenom: string  |
+| - email: string   |
+| - specialites[]   |
+| - qualifications[]|
++-------------------+
+| + creerCours()    |
+| + gererModules()  |
+| + creerExamen()   |
++-------------------+
+
+2. CONTENU PÉDAGOGIQUE
+----------------------
++-------------------+
+|      Cours       |
++-------------------+
+| - id: int         |
+| - titre: string   |
+| - description     |
+| - formateur_id    |
+| - category        |
+| - niveau          |
+| - modules[]       |
++-------------------+
+| + ajoutModule()   |
+| + publier()       |
+| + modifier()      |
++-------------------+
+          ↓
++-------------------+
+|      Module      |
++-------------------+
+| - id: int         |
+| - cours_id        |
+| - type           |
+| - titre          |
+| - contenu        |
+| - ordre          |
++-------------------+
+| + marquerTermine()|
++-------------------+
+
+3. ÉVALUATION
+-------------
++-------------------+
+|      Examen      |
++-------------------+
+| - id: int         |
+| - cours_id        |
+| - titre          |
+| - seuil_reussite |
+| - questions[]     |
++-------------------+
+| + verifierReponses|
+| + calculerScore() |
++-------------------+
+          ↓
++-------------------+
+|       Quiz       |
++-------------------+
+| - id: int         |
+| - examen_id       |
+| - question        |
+| - options[]       |
+| - reponse_correcte|
+| - points         |
++-------------------+
+
+4. PROGRESSION
+-------------
++------------------------+
+|   ModuleProgression    |
++------------------------+
+| - eleve_id            |
+| - module_id           |
+| - est_complete        |
+| - date_debut          |
+| - date_completion     |
++------------------------+
+| + mettreAJour()       |
++------------------------+
+
++------------------------+
+|    ExamenResultat      |
++------------------------+
+| - eleve_id            |
+| - examen_id           |
+| - score               |
+| - est_reussi          |
+| - date_passage        |
++------------------------+
+| + enregistrerReponses()|
++------------------------+
+
+5. INTERACTION
+-------------
++-------------------+
+|   Commentaire    |
++-------------------+
+| - id: int         |
+| - eleve_id       |
+| - cours_id       |
+| - contenu        |
+| - note           |
+| - date           |
++-------------------+
+| + repondre()     |
++-------------------+
+
++-------------------+
+|     Chatbot      |
++-------------------+
+| - model: string   |
+| - context        |
++-------------------+
+| + getResponse()   |
+| + setContext()    |
++-------------------+
+
+RELATIONS:
+---------
+- Eleve ---(suit)---> Cours
+- Formateur ---(crée)---> Cours
+- Cours ---(contient)---> Module
+- Cours ---(a)---> Examen
+- Examen ---(contient)---> Quiz
+- Eleve ---(a)---> ModuleProgression
+- Eleve ---(a)---> ExamenResultat
+- Eleve ---(fait)---> Commentaire
+- Cours ---(reçoit)---> Commentaire
+- Eleve ---(utilise)---> Chatbot
+
+NOTES:
+------
+1. Les attributs essentiels sont listés
+2. Les méthodes principales sont indiquées
+3. Les relations montrent les liens logiques
+4. L'héritage est indiqué par les flèches (↑)
+5. Les compositions sont indiquées par les flèches pleines (↓)

@@ -1,0 +1,158 @@
+
+1.7	  CAHIER DES CHARGES FONCTIONNEL
+1.7.1	Contexte et Problématique 
+        Le développement du numérique a considérablement élargi l’accès à la formation grâce aux plateformes e-learning. Cependant, la majorité de ces solutions proposent encore des contenus standardisés, peu adaptés aux profils et aux besoins individuels des apprenants. Cette approche uniforme limite l’efficacité pédagogique, notamment pour les étudiants ayant des rythmes ou des styles d’apprentissage différents. L’intelligence artificielle (IA) offre un potentiel considérable pour transformer cette réalité. Grâce à l’analyse des données issues des interactions apprenant-plateforme, l’IA permet d’ajuster dynamiquement les parcours de formation : recommandation de contenus adaptés, révision ciblée des notions mal comprises, évaluation personnalisée, etc. Face à ces avancées, une question centrale se pose : comment obtenir une plateforme e-learning intelligente qui soit capable de proposer un apprentissage individualisé, évolutif et accessible, tout en assurant la sécurité des données et l’adaptabilité à des contextes variés ? Cette problématique soulève des enjeux techniques, pédagogiques et éthiques cruciaux pour l’avenir de l’éducation numérique, au regard de cette interrogation notre recherche met un point d’honneur sur « LE DEVELOPPEMENT  D’UNE PLATEFORME E-LEARNING BASER SUR L’INTELLIGENCE ARTIFICIELLE POUR PERSONNALISER LES COURS. »
+1.7.2	Objectif principal :
+Créer une plateforme e-learning intelligente et interactive, capable de personnaliser l'expérience utilisateur grâce à l'IA.
+•	Objectifs spécifiques :
+-	Offrir un espace de formation en ligne ergonomique.
+-	Intégrer des fonctionnalités IA pour personnaliser les parcours.
+-	Permettre un suivi individualisé et des recommandations automatiques.
+-	Intégrer des modules d’évaluation et de feedback intelligents.
+
+1.7.3	Les Acteurs du système 
+
+•	Apprenants (ou Étudiants)
+-	Rôle : Utilisateurs finaux de la plateforme.
+-	Fonctions : Suivre les cours, interagir avec les ressources, répondre aux évaluations, recevoir du feedback personnalisé.
+-	Interaction avec l’IA : Bénéficient de parcours personnalisés, recommandations de contenus, assistance via chatbot, etc.
+
+•	Enseignants/Formateurs
+-	Rôle : Créateurs et gestionnaires de contenus pédagogiques.
+-	Fonctions : Publier des cours, suivre les progrès des étudiants, configurer les paramètres d’adaptation, analyser les rapports générés par l’IA.
+-	Interaction avec l’IA : Reçoivent des analyses sur les performances des étudiants, suggestions pédagogiques, alertes sur les cas à risque.
+
+•	Administrateurs de la plateforme
+-	Rôle : Supervision technique et organisationnelle.
+-	Fonctions : Gérer les utilisateurs, la sécurité, les droits d’accès, les statistiques globales.
+-	Interaction avec l’IA : Configurent les modules IA, surveillent les performances du système, assurent la conformité (ex : RGPD).
+
+1.7.4	Expressions des besoins 
+
+1.7.4.1	Besoins Fonctionnels 
+
+•	Gestion des utilisateurs
+
+-	Création de comptes (étudiants, enseignants, administrateurs).
+-	Gestion des profils, préférences et historiques d’apprentissage.
+-	Authentification sécurisée (avec rôle et droits d’accès différenciés).
+
+•	Gestion des contenus pédagogiques
+
+-	Ajout, modification et suppression de cours (textes, vidéos, quiz, PDF…).
+-	Organisation par modules, niveaux ou parcours.
+-	Indexation automatique du contenu pour faciliter la recherche.
+
+•	Personnalisation de l’apprentissage par l’IA
+
+-	Recommandation de contenus adaptés au profil et au rythme de l’apprenant.
+-	Adaptation dynamique des parcours selon les performances.
+-	Suivi individualisé et suggestion d’exercices ciblés.
+-	Détection des lacunes et renforcement ciblé.
+
+•	Suivi et évaluation des performances
+-	Quiz et devoirs autocorrigés.
+-	Analyse des résultats et évaluation automatique.
+-	Feedback instantané et personnalisé.
+-	Tableaux de bord de suivi pour étudiants et enseignants.
+
+•	Analyse prédictive et comportementale
+-	Prédiction de la réussite ou du décrochage des étudiants.
+-	Détection des habitudes d’apprentissage et des difficultés.
+-	Génération de rapports analytiques avancés.
+
+•	Assistant virtuel / Chatbot pédagogique
+-	Réponses automatiques aux questions des étudiants 24/7.
+-	Orientation dans la plateforme et suggestion de ressources.
+-	Suivi de progression avec rappels et encouragements.
+-	Utilisation du NLP pour comprendre les requêtes en langage naturel.
+
+•	Système de recommandation
+Recommandation de contenus selon :
+-	les préférences,
+-	les objectifs,
+-	les résultats précédents.
+-	Utilisation d’algorithmes hybrides (filtrage collaboratif + basé sur le contenu).
+
+1.7.4.2	  Besoins non fonctionnels
+       Les besoins non fonctionnels définissent les exigences de qualité que le système doit respecter pour garantir une bonne expérience utilisateur, une sécurité optimale et une performance adéquate.
+
+•	Performance
+-	Le système doit répondre en moins de 3 secondes pour 95 % des requêtes.
+-	La plateforme doit pouvoir gérer simultanément plusieurs centaines d’utilisateurs sans ralentissement (scalabilité).
+-	L’analyse IA (personnalisation, recommandations) doit être exécutée en arrière-plan sans affecter la navigation.
+
+•	Sécurité
+-	Authentification sécurisée (mot de passe crypté, double authentification si nécessaire).
+-	Respect du RGPD pour la gestion des données personnelles (droits d’accès, anonymisation, consentement).
+-	Sauvegarde régulière des données et récupération en cas d’incident (sauvegarde automatique, backup cloud).
+-	Protection contre les attaques courantes (XSS, injection SQL, brute force…).
+
+•	Accessibilité
+-	Interface accessible aux personnes en situation de handicap (conformité aux normes WCAG 2.1)
+
+•	Compatibilité
+-	Fonctionnement optimal sur les navigateurs web modernes (Chrome, Firefox, Edge, Safari).
+-	Plateforme responsive : accessible sur PC, tablette et smartphone.
+-	Intégration possible avec d’autres systèmes (via API RESTful).
+
+•	Fiabilité
+-	Taux de disponibilité de 99,5 % minimum.
+-	Journalisation des erreurs système pour débogage.
+-	Tests automatisés pour garantir la stabilité des modules IA et pédagogiques.
+
+•	Ergonomie et expérience utilisateur (UX)
+-	Interface intuitive et conviviale pour tous les profils (étudiants, enseignants, administrateurs).
+-	Présentation claire des cours, progression visible, menus simples.
+-	Interface multilingue (selon le public ciblé).
+
+•	Maintenabilité
+-	Code source bien structuré et documenté pour faciliter les mises à jour.
+-	Possibilité d’évolution (ajout de nouvelles fonctionnalités IA ou modules pédagogiques).
+-	Documentation technique pour les développeurs.
+
+1.7.5	Choix de la méthode d’analyse 
+
+Nous allons utiliser le langage d’analyse UML avec le logiciel Astah Community
+
+1.7.6	Langage de programmation 
+
+1.7.6.1	Backend (logique métier, API, gestion des données)
+
+•	Python 
+-	Fortement utilisé pour l’intégration de l’IA (scikit-learn, TensorFlow, PyTorch).
+-	Frameworks web : Flask.
+-	Idéal pour la personnalisation des cours, analyse des données, etc.
+
+•	Node.js (JavaScript)
+-	Asynchrone et performant pour les API temps réel.
+-	Framework : Express.js.
+
+
+
+1.7.6.2	  Frontend (Interface utilisateur)
+
+•	JavaScript
+-	Langage principal du web.
+-	Frameworks: next.js
+
+•	HTML5 / CSS3
+-	Structure et mise en page de l’interface.
+-	Responsive design avec Tailwind CSS.
+
+1.7.6.3	 Intelligence Artificielle et Machine Learning
+
+•	Python est le langage standard :
+-	Bibliothèques : TensorFlow, Keras, PyTorch, scikit-learn, spaCy (NLP), pandas, NumPy.
+
+•	Pour des tâches de traitement de données massives :
+-	R (analyses statistiques) ou Scala/Spark si besoin de traitement distribué.
+
+1.7.6.4	 Base de données
+•	SQL : MySQL (relationnelle).
+•	GraphQL : peut aussi être utilisé pour des requêtes plus flexibles côté API.
+
+1.7.6.4. Model IA
+	
+•	Model : Germma : 3b
+•	Resource : Ollama

@@ -5,6 +5,13 @@ import Image from 'next/image';
 import Header from '../component/HeaderEleve';
 import Sidebar from '../component/SidebarEleve';
 
+// Fonction pour obtenir une image aléatoire
+const getRandomCourseImage = () => {
+  const imageNumbers = Array.from({ length: 9 }, (_, i) => i + 1); // 9 images disponibles
+  const randomIndex = Math.floor(Math.random() * imageNumbers.length);
+  return `/cour/${imageNumbers[randomIndex]}.jpg`;
+};
+
 interface Course {
   id: number;
   titre: string;
@@ -16,6 +23,7 @@ interface Course {
   mots_cles: string[];
   formateur_nom: string;
   formateur_prenom: string;
+  randomImage: string;
 }
 
 export default function CoursEleve() {
@@ -41,7 +49,12 @@ export default function CoursEleve() {
         const response = await fetch('http://localhost:5000/api/cours/disponibles');
         const data = await response.json();
         if (data.status === 'success') {
-          setCourses(data.courses);
+          // Ajouter une image aléatoire à chaque cours
+            const coursesWithImages: Course[] = data.courses.map((course: Course): Course & { randomImage: string } => ({
+            ...course,
+            randomImage: getRandomCourseImage()
+            }));
+          setCourses(coursesWithImages);
         }
       } catch (error) {
         console.error('Erreur lors du chargement des cours:', error);
@@ -109,7 +122,7 @@ export default function CoursEleve() {
                   >
                     <div className="relative pt-[56.25%]">
                       <Image
-                        src={course.thumbnail || '/default-course.jpg'}
+                        src={course.randomImage || '/default-course.jpg'}
                         alt={course.titre}
                         fill
                         className="object-cover"

@@ -1,0 +1,98 @@
+DIAGRAMME DES CAS D'UTILISATION - SAMLEARN
+=========================================
+
++-------------------------------------------------------------------+
+|                            SAMLEARN SYSTEM                           |
+|-------------------------------------------------------------------|
+|                                                                     |
+|  +---------------+    +------------------+    +------------------+   |
+|  |    ÉLÈVE      |    |    FORMATEUR     |    |  ADMINISTRATEUR  |  |
+|  +---------------+    +------------------+    +------------------+   |
+|         |                     |                       |             |
+|         |                     |                       |             |
+|   [Gestion Compte]     [Gestion Compte]       [Gestion Système]    |
+|         |                     |                       |             |
+|    * S'inscrire         * S'inscrire           * Gérer Users      |
+|    * Se connecter       * Se connecter         * Gérer Accès      |
+|    * Modifier profil    * Modifier profil      * Monitorer        |
+|         |                     |                       |             |
+|   [Apprentissage]      [Gestion Cours]               |             |
+|         |                     |                       |             |
+|    * Voir cours        * Créer cours                 |             |
+|    * Suivre cours      * Modifier cours              |             |
+|    * Passer tests      * Ajouter modules             |             |
+|    * Voir progrès      * Créer examens               |             |
+|         |                     |                       |             |
+|   [Interaction]        [Suivi Élèves]                |             |
+|         |                     |                       |             |
+|    * Commenter         * Voir progrès                |             |
+|    * Noter cours       * Répondre comments           |             |
+|    * Utiliser IA      * Voir statistiques           |             |
+|         |                     |                       |             |
+|   [IA Assistant]      [IA Insights]                  |             |
+|         |                     |                       |             |
+|    * Chat aide        * Analyse données              |             |
+|    * Recommendations   * Recommendations             |             |
+|    * Personnalisation  * Alertes                     |             |
+|                                                                     |
++-------------------------------------------------------------------+
+
+LÉGENDE:
+--------
+[ ] : Groupe de fonctionnalités
+*   : Cas d'utilisation
+|   : Relation/Association
++   : Acteur ou système
+
+DESCRIPTION DES ACTEURS:
+----------------------
+
+1. ÉLÈVE:
+   - Utilisateur principal qui suit les cours
+   - Interagit avec le contenu pédagogique
+   - Utilise l'assistant IA pour l'apprentissage
+   - Suit sa progression et passe les examens
+
+2. FORMATEUR:
+   - Crée et gère le contenu pédagogique
+   - Suit les progrès des élèves
+   - Interagit avec les élèves via commentaires
+   - Utilise l'IA pour optimiser ses cours
+
+3. ADMINISTRATEUR:
+   - Gère les utilisateurs et les droits
+   - Supervise le système
+   - Assure la maintenance
+   - Contrôle les accès
+
+RELATIONS PRINCIPALES:
+-------------------
+
+1. Élève → Cours:
+   - Inscription
+   - Consultation
+   - Progression
+   - Évaluation
+
+2. Formateur → Cours:
+   - Création
+   - Modification
+   - Gestion
+   - Suivi
+
+3. Administrateur → Système:
+   - Administration
+   - Surveillance
+   - Maintenance
+   - Sécurité
+
+4. Tous → IA:
+   - Assistance
+   - Personnalisation
+   - Analyse
+   - Recommendations
+
+EXTENSIONS:
+----------
+<<include>> : Fonctionnalité incluse dans une autre
+<<extend>>  : Fonctionnalité optionnelle

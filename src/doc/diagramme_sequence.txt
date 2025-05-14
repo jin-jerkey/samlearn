@@ -1,0 +1,102 @@
+DIAGRAMME DE SÉQUENCE - SAMLEARN
+===============================
+
+1. SÉQUENCE D'AUTHENTIFICATION
+-----------------------------
+Utilisateur -> Système : Demande de connexion
+[Authentification]
+    Système -> Base de données : Vérification credentials
+    Base de données -> Système : Retour validation
+    Système -> Utilisateur : Token + Redirection selon rôle
+[/Authentification]
+
+2. SÉQUENCE APPRENTISSAGE (ÉLÈVE)
+--------------------------------
+Élève -> Système : Accès cours
+[Apprentissage]
+    Système -> Base de données : Récupération contenu
+    Base de données -> Système : Données cours
+    Système -> IA Assistant : Initialisation contexte
+    Système -> Élève : Affichage cours + Assistant IA
+
+    [Progression Module]
+        Élève -> Système : Complétion module
+        Système -> Base de données : Mise à jour progression
+        Système -> IA Assistant : Mise à jour contexte
+        Système -> Élève : Feedback + Recommendations
+    [/Progression Module]
+
+    [Examen]
+        Élève -> Système : Passage examen
+        Système -> Base de données : Enregistrement réponses
+        Système -> Élève : Résultats + Certification
+    [/Examen]
+[/Apprentissage]
+
+3. SÉQUENCE CRÉATION COURS (FORMATEUR)
+------------------------------------
+Formateur -> Système : Création cours
+[Création Cours]
+    Système -> Base de données : Enregistrement métadonnées
+    Formateur -> Système : Ajout modules
+    Système -> Base de données : Stockage contenu
+    Formateur -> Système : Configuration examen
+    Système -> Base de données : Enregistrement examen
+    Système -> Formateur : Confirmation création
+[/Création Cours]
+
+4. SÉQUENCE INTERACTION IA
+-------------------------
+Utilisateur -> IA Assistant : Question
+[Traitement IA]
+    IA Assistant -> Base de données : Récupération contexte
+    IA Assistant -> Modèle IA : Génération réponse
+    IA Assistant -> Base de données : Enregistrement interaction
+    IA Assistant -> Utilisateur : Réponse personnalisée
+[/Traitement IA]
+
+5. SÉQUENCE SUIVI PROGRESSION
+----------------------------
+[Suivi]
+    Système -> Base de données : Analyse données apprentissage
+    Système -> IA Assistant : Traitement données
+    
+    [Pour Élève]
+        Système -> Élève : Dashboard progression
+        Système -> Élève : Recommendations personnalisées
+    [/Pour Élève]
+    
+    [Pour Formateur]
+        Système -> Formateur : Statistiques cours
+        Système -> Formateur : Alertes et insights
+    [/Pour Formateur]
+[/Suivi]
+
+LÉGENDE:
+--------
+-> : Flux de données/action
+[ ] : Groupe d'actions
+|   : Séquence temporelle
+
+NOTES:
+------
+1. Chaque séquence principale est asynchrone
+2. L'IA Assistant est constamment actif et réactif
+3. Les données sont persistées en temps réel
+4. Le système maintient la cohérence entre les différents acteurs
+5. Les interactions sont sécurisées et tracées
+
+INTERACTIONS IA:
+--------------
+- Contextualisation automatique selon le profil
+- Adaptation des réponses selon le niveau
+- Apprentissage continu des interactions
+- Génération de recommendations personnalisées
+- Analyse prédictive des performances
+
+SÉCURITÉ:
+---------
+- Validation des tokens à chaque requête
+- Vérification des permissions
+- Journalisation des actions critiques
+- Protection des données personnelles

@@ -1,0 +1,51 @@
+DIAGRAMME DE SÉQUENCE - CRÉATION D'UN COURS
+=========================================
+
+1. CRÉATION DU COURS
+-------------------
+Formateur -> Interface : Accède à "Créer un cours"
+[Creation Cours]
+    Formateur -> Interface : Saisit informations cours
+    Interface -> API : /api/cours/create
+    API -> BDD : INSERT cours
+    BDD -> API : Confirmation
+    API -> Interface : ID du cours créé
+[/Creation Cours]
+
+2. AJOUT DES MODULES
+-------------------
+[Ajout Module]
+    Formateur -> Interface : Sélectionne type module
+    [Si type = Document/Vidéo]
+        Formateur -> Interface : Upload fichier
+        Interface -> API : /api/module/create (multipart/form-data)
+        API -> Système : Sauvegarde fichier
+        API -> BDD : INSERT module + chemin fichier
+    [/Si]
+    [Si type = Texte]
+        Formateur -> Interface : Saisit contenu
+        Interface -> API : /api/module/create
+        API -> BDD : INSERT module
+    [/Si]
+    BDD -> API : Confirmation
+    API -> Interface : Module ajouté
+[/Ajout Module]
+
+3. CRÉATION DE L'EXAMEN
+----------------------
+[Creation Examen]
+    Formateur -> Interface : Configure examen
+    Formateur -> Interface : Ajoute questions/réponses
+    Interface -> API : /api/examen/create
+    API -> BDD : INSERT examen
+    API -> BDD : INSERT questions
+    BDD -> API : Confirmation
+    API -> Interface : Examen créé
+[/Creation Examen]
+
+NOTES:
+------
+- Le formateur peut ajouter plusieurs modules
+- L'ordre des modules est configurable
+- Les fichiers sont stockés dans le dossier 'uploads'
+- L'examen est facultatif mais recommandé

@@ -1,0 +1,68 @@
+DIAGRAMME DE SÉQUENCE - PARTICIPATION AU COURS
+===========================================
+
+1. INSCRIPTION AU COURS
+---------------------
+Élève -> Interface : Sélectionne un cours
+Interface -> API : /api/cours/participer
+API -> BDD : Vérifie inscription
+[Si non inscrit]
+    API -> BDD : INSERT eleve_cours
+    BDD -> API : Confirmation
+    API -> Interface : Inscription confirmée
+[/Si]
+
+2. SUIVI DU COURS
+----------------
+[Suivi Module]
+    Élève -> Interface : Accède au module
+    Interface -> API : /api/cours/{id}/details
+    API -> BDD : Récupère contenu
+    BDD -> API : Module + progression
+    API -> Interface : Affichage module
+
+    [Completion Module]
+        Élève -> Interface : Termine module
+        Interface -> API : /api/module/complete
+        API -> BDD : UPDATE progression
+        BDD -> API : Confirmation
+        API -> Interface : Module marqué complet
+    [/Completion Module]
+
+    [Assistant IA]
+        Élève -> Chatbot : Pose question
+        Chatbot -> API : /api/chatbot/query
+        API -> IA : Traitement (Gemma)
+        IA -> API : Réponse générée
+        API -> Interface : Affichage réponse
+    [/Assistant IA]
+[/Suivi Module]
+
+3. PASSAGE DE L'EXAMEN
+--------------------
+[Examen]
+    Élève -> Interface : Commence examen
+    Interface -> API : /api/examens/cours/{id}
+    API -> BDD : Récupère questions
+    BDD -> API : Questions examen
+    API -> Interface : Affiche examen
+
+    [Soumission]
+        Élève -> Interface : Soumet réponses
+        Interface -> API : /api/examen/submit
+        API -> BDD : Vérifie réponses
+        API -> BDD : Enregistre résultats
+        [Si réussite]
+            API -> BDD : UPDATE cours terminé
+        [/Si]
+        BDD -> API : Score final
+        API -> Interface : Affiche résultats
+    [/Soumission]
+[/Examen]
+
+NOTES:
+------
+- La progression est sauvegardée automatiquement
+- L'assistant IA utilise le contexte du cours
+- L'examen n'est accessible qu'après tous les modules
+- La certification est délivrée après réussite

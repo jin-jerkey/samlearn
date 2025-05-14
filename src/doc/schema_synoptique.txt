@@ -1,0 +1,71 @@
+                                    ARCHITECTURE SYNOPTIQUE DE SAMLEARN
+                                    ================================
+
++----------------------------------------------------------------------------------------+
+|                                    INTERFACE UTILISATEUR                                 |
+|                                    (Frontend - Next.js)                                  |
++----------------------------------------------------------------------------------------+
+                ↑                           ↑                           ↑
+                |                           |                           |
+                ↓                           ↓                           ↓
++----------------------------------------------------------------------------------------+
+|                                   API BACKEND (Flask)                                    |
+|----------------------------------------------------------------------------------------|
+|                                                                                         |
+|   +------------------+    +-------------------+    +----------------------+              |
+|   |  Gestion Users   |    | Gestion Contents  |    | IA & Personnalisation|              |
+|   |------------------|    |-------------------|    |----------------------|              |
+|   |- Authentication  |    |- CRUD Cours       |    |- Chatbot (Gemma)     |              |
+|   |- Autorisations   |    |- Upload Fichiers  |    |- Recommandations     |              |
+|   |- Profils         |    |- Modules & Quiz   |    |- Analyse Progrès     |              |
+|   +------------------+    +-------------------+    +----------------------+              |
+|                                                                                         |
++----------------------------------------------------------------------------------------+
+                ↑                           ↑                           ↑
+                |                           |                           |
+                ↓                           ↓                           ↓
++----------------------------------------------------------------------------------------+
+|                                  BASE DE DONNÉES                                         |
+|                                     (MySQL)                                             |
+|----------------------------------------------------------------------------------------|
+|   +------------------+    +-------------------+    +----------------------+              |
+|   |    Users Data    |    |   Content Data    |    |    Learning Data     |              |
+|   |------------------|    |-------------------|    |----------------------|              |
+|   |- Élèves          |    |- Cours            |    |- Progression         |              |
+|   |- Formateurs      |    |- Modules          |    |- Historique         |              |
+|   |- Administrateurs  |    |- Examens          |    |- Interactions       |              |
+|   +------------------+    +-------------------+    +----------------------+              |
+|                                                                                         |
++----------------------------------------------------------------------------------------+
+
+LÉGENDE :
+--------
+→ : Flux de données bidirectionnel
++ : Composant principal
+- : Sous-composant/Fonctionnalité
+
+DESCRIPTION DES COUCHES :
+-----------------------
+
+1. INTERFACE UTILISATEUR (Frontend)
+   - Interface responsive avec Next.js et Tailwind CSS
+   - Interfaces spécifiques pour élèves, formateurs et administrateurs
+   - Composants interactifs pour l'apprentissage
+
+2. API BACKEND (Flask)
+   - Gestion des utilisateurs et authentification
+   - CRUD pour les contenus pédagogiques
+   - Intégration IA avec Gemma pour le chatbot
+   - Logique de personnalisation et recommandations
+
+3. BASE DE DONNÉES (MySQL)
+   - Stockage structuré des données utilisateurs
+   - Gestion des contenus pédagogiques
+   - Suivi des progressions et interactions
+
+FLUX DE DONNÉES :
+---------------
+- L'interface utilisateur communique avec l'API via des requêtes HTTP
+- L'API interagit avec la base de données pour la persistance
+- Le module IA analyse les données pour la personnalisation
+- Les fichiers (PDF, vidéos) sont stockés sur le serveur

@@ -1352,47 +1352,91 @@ def get_eleve_stats(eleve_id):
         try:
             cursor = connection.cursor(dictionary=True)
             
-            # Récupérer les statistiques
+            # Statistiques globales
             stats = {
-                'totalCours': 0,
-                'coursTermines': 0,
-                'coursEnCours': 0,
-                'examensReussis': 0,
-                'totalExamens': 0,
-                'tauxReussite': 0
+                'progressionGlobale': 0,
+                'coursActifs': [],
+                'derniereActivite': [],
             }
-            
-            # Compter les cours
+
+            # Calculer la progression globale
             cursor.execute("""
                 SELECT 
-                    COUNT(*) as total,
-                    SUM(CASE WHEN est_termine = 1 THEN 1 ELSE 0 END) as termines
-                FROM eleve_cours
-                WHERE eleve_id = %s
+                    COUNT(DISTINCT ec.cours_id) as total_cours,
+                    COUNT(DISTINCT CASE WHEN ec.est_termine = 1 THEN ec.cours_id END) as cours_termines
+                FROM eleve_cours ec
+                WHERE ec.eleve_id = %s
             """, (eleve_id,))
             cours_stats = cursor.fetchone()
             
-            if cours_stats:
-                stats['totalCours'] = cours_stats['total'] or 0
-                stats['coursTermines'] = cours_stats['termines'] or 0
-                stats['coursEnCours'] = stats['totalCours'] - stats['coursTermines']
-            
-            # Compter les examens
+            if cours_stats and cours_stats['total_cours'] > 0:
+                stats['progressionGlobale'] = round((cours_stats['cours_termines'] / cours_stats['total_cours']) * 100)
+
+            # Récupérer les cours actifs avec leur progression
             cursor.execute("""
                 SELECT 
-                    COUNT(*) as total,
-                    SUM(CASE WHEN est_reussi = 1 THEN 1 ELSE 0 END) as reussis
-                FROM eleve_examen_resultats
-                WHERE eleve_id = %s
-            """, (eleve_id,))
-            exam_stats = cursor.fetchone()
-            
-            if exam_stats:
-                stats['totalExamens'] = exam_stats['total'] or 0
-                stats['examensReussis'] = exam_stats['reussis'] or 0
-                stats['tauxReussite'] = round((stats['examensReussis'] / stats['totalExamens'] * 100) 
-                                            if stats['totalExamens'] > 0 else 0, 2)
-            
+                    c.id,
+                    c.titre,
+                    COALESCE(
+                        (SELECT COUNT(*) * 100.0 / NULLIF(total_modules.total, 0)
+                        FROM eleve_module_progression emp
+                        JOIN modules m ON emp.module_id = m.id
+                        WHERE m.cours_id = c.id AND emp.eleve_id = %s AND emp.est_complete = 1),
+                        0
+                    ) as progression
+                FROM cours c
+                JOIN eleve_cours ec ON c.id = ec.cours_id
+                JOIN (
+                    SELECT cours_id, COUNT(*) as total
+                    FROM modules
+                    GROUP BY cours_id
+                ) total_modules ON c.id = total_modules.cours_id
+                WHERE ec.eleve_id = %s AND ec.est_termine = 0
+                ORDER BY ec.date_inscription DESC
+                LIMIT 3
+            """, (eleve_id, eleve_id))
+            stats['coursActifs'] = [
+                {
+                    'id': row['id'],
+                    'titre': row['titre'],
+                    'progression': round(float(row['progression']), 1)
+                }
+                for row in cursor.fetchall()
+            ]
+
+            # Récupérer les dernières activités
+            cursor.execute("""
+                SELECT 
+                    'Module complété' as type,
+                    m.titre,
+                    c.titre as cours_titre,
+                    emp.date_completion as date
+                FROM eleve_module_progression emp
+                JOIN modules m ON emp.module_id = m.id
+                JOIN cours c ON m.cours_id = c.id
+                WHERE emp.eleve_id = %s AND emp.est_complete = 1
+                UNION ALL
+                SELECT 
+                    'Examen passé' as type,
+                    e.titre,
+                    c.titre as cours_titre,
+                    eer.date_passage as date
+                FROM eleve_examen_resultats eer
+                JOIN examens e ON eer.examen_id = e.id
+                JOIN cours c ON e.cours_id = c.id
+                WHERE eer.eleve_id = %s
+                ORDER BY date DESC
+                LIMIT 5
+            """, (eleve_id, eleve_id))
+            stats['derniereActivite'] = [
+                {
+                    'type': row['type'],
+                    'titre': f"{row['titre']} ({row['cours_titre']})",
+                    'date': row['date'].strftime('%Y-%m-%d %H:%M:%S')
+                }
+                for row in cursor.fetchall()
+            ]
+
             return jsonify({
                 "status": "success",
                 "stats": stats
@@ -1403,7 +1447,7 @@ def get_eleve_stats(eleve_id):
         finally:
             cursor.close()
             connection.close()
-    
+
     return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
 
 # Route pour mettre à jour les informations de l'élève
@@ -1585,6 +1629,7 @@ def get_course_students(cours_id):
         finally:
             cursor.close()
             connection.close()
+            
 # Route pour récupérer les commentaires d'un cours avec les réponses
 @app.route('/api/cours/<cours_id>/comments', methods=['GET'])
 def get_course_comments_with_responses(cours_id):

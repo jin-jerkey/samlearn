@@ -116,31 +116,57 @@ export default function RegisterFormateur() {
             </div>
 
             <div>
-              <label htmlFor="specialites" className="text-sm font-medium text-gray-300">Spécialités (séparées par des virgules)</label>
-              <input
-                id="specialites"
-                name="specialites"
-                type="text"
-                required
-                value={formData.specialites}
-                onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-                placeholder="Mathématiques, Physique, Chimie..."
-              />
+              <label htmlFor="specialites" className="text-sm font-medium text-gray-300">Spécialités</label>
+              <select
+              id="specialites"
+              name="specialites"
+              required
+              multiple
+              value={formData.specialites.split(',')}
+              onChange={(e) => {
+                const values = Array.from(e.target.selectedOptions, option => option.value);
+                setFormData({ ...formData, specialites: values.join(',') });
+              }}
+              className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+              size={5}
+              >
+              <option value="Mathématiques">Mathématiques</option>
+              <option value="Physique">Physique</option>
+              <option value="Chimie">Chimie</option>
+              <option value="Informatique">Informatique</option>
+              <option value="Biologie">Biologie</option>
+              <option value="Français">Français</option>
+              <option value="Anglais">Anglais</option>
+              <option value="Histoire">Histoire</option>
+              <option value="Géographie">Géographie</option>
+              </select>
+              <p className="text-xs text-gray-400 mt-1">Maintenez Ctrl (Cmd sur Mac) pour sélectionner plusieurs options</p>
             </div>
 
             <div>
               <label htmlFor="qualifications" className="text-sm font-medium text-gray-300">Qualifications</label>
-              <input
-                id="qualifications"
-                name="qualifications"
-                type="text"
-                required
-                value={formData.qualifications}
-                onChange={handleChange}
-                className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
-                placeholder="Diplômes, Certifications..."
-              />
+              <select
+              id="qualifications"
+              name="qualifications"
+              required
+              multiple
+              value={formData.qualifications.split(',')}
+              onChange={(e) => {
+                const values = Array.from(e.target.selectedOptions, option => option.value);
+                setFormData({ ...formData, qualifications: values.join(',') });
+              }}
+              className="mt-1 block w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white"
+              size={5}
+              >
+              <option value="Licence">Licence</option>
+              <option value="Master">Master</option>
+              <option value="Doctorat">Doctorat</option>
+              <option value="CAPES">CAPES</option>
+              <option value="Agrégation">Agrégation</option>
+              <option value="Certification professionnelle">Certification professionnelle</option>
+              <option value="Formation pédagogique">Formation pédagogique</option>
+              </select>
+              <p className="text-xs text-gray-400 mt-1">Maintenez Ctrl (Cmd sur Mac) pour sélectionner plusieurs options</p>
             </div>
 
             <div>
