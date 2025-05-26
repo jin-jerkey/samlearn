@@ -40,9 +40,7 @@ CREATE TABLE `commentaires` (
 --
 -- Dumping data for table `commentaires`
 --
-
-INSERT INTO `commentaires` (`id`, `eleve_id`, `cours_id`, `contenu`, `note`, `created_at`, `updated_at`) VALUES
-(1, 1, 3, 'j\'ai aimer ce cour vraiment', 5, '2025-04-17 10:51:57', '2025-04-17 10:51:57');
+ 
 
 -- --------------------------------------------------------
 
@@ -67,13 +65,7 @@ CREATE TABLE `cours` (
 --
 -- Dumping data for table `cours`
 --
-
-INSERT INTO `cours` (`id`, `formateur_id`, `titre`, `description`, `category`, `difficulty_level`, `langue`, `duree_estimee`, `prerequis`, `mots_cles`, `created_at`) VALUES
-(1, 1, 'la physique avec papa wemba', 'apprendre les bien fait de la physique ', 'Physique', '', 'Français', 2, '[\"base de physique\"]', '[\"physique\"]', '2025-03-21 14:38:17'),
-(2, 1, 'limite d\'une fonction', 'Apprendre facilement les limites ', 'Mathématiques', '', 'Français', 2, '[\"g\\u00e9ometrie\"]', '[\"mathematique\"]', '2025-03-21 15:47:55'),
-(3, 1, 'equation du segond degré facile avec mama sam', 'Apprendre à faire des équations comme un enfant du CM2', 'Mathématiques', '', 'Français', 320, '[\"alg\\u00e9bre\"]', '[\"mathematique\"]', '2025-03-24 10:20:05'),
-(4, 0, 'chime pour les null', 'fait de la chimie pour le monde', 'Chimie', '', 'Français', 400, '[\"chimie\"]', '[\"chimie\"]', '2025-03-25 12:58:21');
-
+ 
 -- --------------------------------------------------------
 
 --
@@ -95,12 +87,7 @@ CREATE TABLE `eleve` (
 --
 -- Dumping data for table `eleve`
 --
-
-INSERT INTO `eleve` (`id`, `nom`, `prenom`, `email`, `password_hash`, `created_at`, `last_login`, `is_active`, `niveau`) VALUES
-(1, 'Jerkey', 'Steve', 'stevejerkey@gmail.com', 'scrypt:32768:8:1$1NZniHedpDYWYOqo$4b7f36526cee42c175e64d9e1a7e599138f6246e7dd9393eee1b1540321638211a4519cedf90238ff13f982501e049e94c3110ec76d2ec0c58237553dbc677e8', '2025-03-19 16:56:05', '2025-04-17 10:07:18', 1, '1ereC'),
-(8, 'abou', 'nadal', 'abou@gmail.com', 'scrypt:32768:8:1$ObzZE3MqFRKhC86x$7cd6e822beee988c34bcf77cb653ef4b739770ea2dac2bfdaca98c0393265908f35310e89c1a0b3d806641fdf8b3039eee66ea261e7705e460a9ebb63f16fb30', '2025-04-01 11:43:20', '2025-04-07 16:08:39', 1, '1ereD');
-
--- --------------------------------------------------------
+ 
 
 --
 -- Table structure for table `eleve_cours`
@@ -119,13 +106,6 @@ CREATE TABLE `eleve_cours` (
 -- Dumping data for table `eleve_cours`
 --
 
-INSERT INTO `eleve_cours` (`id`, `eleve_id`, `cours_id`, `date_inscription`, `est_termine`, `pourcentage_progression`) VALUES
-(1, 1, 1, '2025-03-25 14:09:57', 0, 0),
-(2, 1, 4, '2025-04-01 11:25:06', 1, 0),
-(3, 1, 3, '2025-04-01 11:31:14', 1, 0),
-(4, 1, 2, '2025-04-01 11:40:43', 0, 0),
-(5, 8, 4, '2025-04-01 11:45:06', 0, 0),
-(6, 8, 3, '2025-04-01 11:45:50', 0, 0);
 
 -- --------------------------------------------------------
 
@@ -146,12 +126,7 @@ CREATE TABLE `eleve_examen_resultats` (
 --
 -- Dumping data for table `eleve_examen_resultats`
 --
-
-INSERT INTO `eleve_examen_resultats` (`id`, `eleve_id`, `examen_id`, `date_passage`, `score`, `est_reussi`, `tentative`) VALUES
-(2, 1, 1, '2025-04-08 11:41:46', 0, 0, 1),
-(3, 1, 1, '2025-04-08 13:28:10', 100, 1, 1),
-(4, 1, 2, '2025-04-08 13:28:31', 100, 1, 1),
-(5, 1, 2, '2025-04-17 10:08:06', 100, 1, 1);
+ 
 
 -- --------------------------------------------------------
 
@@ -172,10 +147,7 @@ CREATE TABLE `eleve_module_progression` (
 -- Dumping data for table `eleve_module_progression`
 --
 
-INSERT INTO `eleve_module_progression` (`id`, `eleve_id`, `module_id`, `date_debut`, `date_completion`, `est_complete`) VALUES
-(1, 1, 5, '2025-04-08 11:03:13', '2025-04-17 10:07:55', 1),
-(2, 1, 1, '2025-04-08 11:06:14', '2025-04-08 11:26:41', 1),
-(3, 1, 2, '2025-04-08 11:06:21', '2025-04-08 11:26:44', 1);
+ 
 
 -- --------------------------------------------------------
 
@@ -195,13 +167,7 @@ CREATE TABLE `eleve_quiz_reponses` (
 --
 -- Dumping data for table `eleve_quiz_reponses`
 --
-
-INSERT INTO `eleve_quiz_reponses` (`id`, `eleve_id`, `quiz_id`, `examen_resultat_id`, `reponse_donnee`, `est_correcte`) VALUES
-(1, 1, 1, 3, '[]', 1),
-(2, 1, 2, 4, '[]', 1),
-(3, 1, 3, 4, '[]', 1),
-(4, 1, 2, 5, '[]', 1),
-(5, 1, 3, 5, '[]', 1);
+ 
 
 -- --------------------------------------------------------
 
@@ -219,12 +185,7 @@ CREATE TABLE `examens` (
 --
 -- Dumping data for table `examens`
 --
-
-INSERT INTO `examens` (`id`, `cours_id`, `titre`, `seuil_reussite`) VALUES
-(1, 3, 'certifie toi', 50),
-(2, 4, 'sdsdsdsdsds', 50),
-(3, 1, 'cvcvcvcvcvcv', 50);
-
+ 
 -- --------------------------------------------------------
 
 --
@@ -251,11 +212,7 @@ CREATE TABLE `formateur` (
 -- Dumping data for table `formateur`
 --
 
-INSERT INTO `formateur` (`id`, `nom`, `prenom`, `email`, `password_hash`, `created_at`, `last_login`, `is_active`, `bio`, `specialites`, `qualifications`, `taux_reussite`, `methode_pedagogique`) VALUES
-(0, 'zeufack', 'steve', 'steve@gmail.com', 'scrypt:32768:8:1$oEP6zGVExpheq0lx$b6f692644115a6fd484b1c64bf4fb6833e4f04c7055918b9aff490e03da04a59f4ed160683c7b06b7b213bd243f1bb5553fae13ee9e8565b663c4d9da5648d2b', '2025-03-25 12:56:34', '2025-04-07 16:28:02', 1, 'cvcvcvcvcvcdf', '[\"Chimie\", \"mathematique\", \"science\"]', '[\"bac\"]', NULL, 'Théorique'),
-(1, 'jerkey', 'jin', 'jin@gmail.com', 'scrypt:32768:8:1$dRbWR2C8VmyDQ3nH$25b32b63f40b2257fc1826279d62a6e9c993ce88b973a16b93a2c176f6d587116c06033170af9aadc260fdf4b72452472b89d2b956361ace4f2206d0d60d78aa', '2025-03-21 11:50:15', '2025-04-17 10:09:45', 1, 'fdfdfdfdf', '[\"Chimie\", \"mathematique\", \"science\"]', '[\"bac\"]', NULL, 'Pratique');
-
--- --------------------------------------------------------
+ 
 
 --
 -- Table structure for table `modules`
@@ -274,13 +231,7 @@ CREATE TABLE `modules` (
 -- Dumping data for table `modules`
 --
 
-INSERT INTO `modules` (`id`, `cours_id`, `type`, `titre`, `contenu`, `ordre`) VALUES
-(1, 1, 'texte', 'demarage', 'tout apprendre sur les competene en physique', 1),
-(2, 1, 'document', 'tout a savoir', 'uploads\\modele-statuts-ohada-sas-1.pdf', 1),
-(3, 1, 'vidéo', 'et de trois', 'uploads\\Home_-_X_2.mp4', 1),
-(4, 3, 'document', 'boum', 'uploads\\BIIC_CardLess_Specification_ICPS-Middle.pdf', 1),
-(5, 4, 'texte', 'dsd', 'sdsdsdsdsdsd', 1),
-(6, 4, 'texte', 'dsdsds', 'sdsdsdsdsdsdfghhghg', 1);
+ 
 
 -- --------------------------------------------------------
 
@@ -300,11 +251,8 @@ CREATE TABLE `quizzes` (
 --
 -- Dumping data for table `quizzes`
 --
-
-INSERT INTO `quizzes` (`id`, `examen_id`, `question`, `options`, `reponse_correcte`, `points`) VALUES
-(1, 1, 'qui est l\'autre ', '[\"boum\", \"baomm\", \"fdfd\", \"dfdfd\"]', '[]', 1),
-(2, 2, 'fgfgfg', '[\"fgfgfgfg\", \"cvbvbv\", \"xcxcx\", \"jhjhj\"]', '[]', 10),
-(3, 2, 'dfdfdf', '[\"fgfgfg\", \"dfd\", \"fgf\", \"ghgh\"]', '[]', 10);
+ 
+ 
 
 -- --------------------------------------------------------
 
@@ -339,6 +287,24 @@ CREATE TABLE `chatbot_conversations` (
   CONSTRAINT `chatbot_conversations_ibfk_1` FOREIGN KEY (`eleve_id`) REFERENCES `eleve` (`id`),
   CONSTRAINT `chatbot_conversations_ibfk_2` FOREIGN KEY (`cours_id`) REFERENCES `cours` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Table structure for table `admin`
+--
+
+CREATE TABLE `admin` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `nom` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL UNIQUE,
+  `password_hash` varchar(255) NOT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `last_login` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Ajouter un administrateur par défaut avec un hash bcrypt valide
+INSERT INTO `admin` (`nom`, `email`, `password_hash`) VALUES
+('Admin', 'admin@samlearn.com', '$2b$12$1UEpzeFXKytVdxtnqwq4Z.h4A/OzuBoOHxbvX6eVlX6VusXQoUr9.');
 
 --
 -- Indexes for dumped tables
@@ -440,6 +406,13 @@ ALTER TABLE `reponsecommentaires`
   ADD KEY `commentaire_id` (`commentaire_id`);
 
 --
+-- Indexes for table `admin`
+--
+ALTER TABLE `admin`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -514,6 +487,12 @@ ALTER TABLE `quizzes`
 --
 ALTER TABLE `reponsecommentaires`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `admin`
+--
+ALTER TABLE `admin`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Constraints for dumped tables

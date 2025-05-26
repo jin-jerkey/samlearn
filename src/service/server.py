@@ -14,7 +14,7 @@ from ml.course_chatbot import CourseChatbot
 app = Flask(__name__)
 CORS(app)
 
-UPLOAD_FOLDER = '../public/uploads'  # Chemin relatif vers le dossier public/uploads
+UPLOAD_FOLDER = '/uploads'  # Chemin relatif vers le dossier public/uploads
 ALLOWED_EXTENSIONS = {'pdf', 'mp4', 'webm'}
 
 if not os.path.exists(UPLOAD_FOLDER):
@@ -23,6 +23,8 @@ if not os.path.exists(UPLOAD_FOLDER):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
+ 
 # Configuration de la base de données
 db_config = {
     'host': 'localhost',
@@ -184,7 +186,8 @@ def register():
     data = request.json
     
     # Vérification des données requises
-    required_fields = ['nom', 'prenom', 'email', 'password', 'niveau']
+    required_fields = ['nom', 'prenom', 'email', 'password', 'niveau'
+]
     if not all(field in data for field in required_fields):
         return jsonify({"status": "error", "message": "Tous les champs sont requis"}), 400
         
@@ -412,57 +415,7 @@ def get_formateur_course_stats(formateur_id):
 
     return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
 
-# Route pour créer un module
-@app.route('/api/module/create', methods=['POST'])
-def create_module():
-    if 'cours_id' not in request.form:
-        return jsonify({"status": "error", "message": "ID du cours requis"}), 400
 
-    type_module = request.form.get('type')
-    titre = request.form.get('titre')
-    contenu = request.form.get('contenu')
-    ordre = request.form.get('ordre', 1)
-    cours_id = request.form.get('cours_id')
-
-    if not all([type_module, titre, cours_id]):
-        return jsonify({"status": "error", "message": "Champs requis manquants"}), 400
-
-    # Gérer le fichier si présent
-    file_path = None
-    if 'fichier' in request.files:
-        file = request.files['fichier']
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file_path = os.path.join(UPLOAD_FOLDER, filename)
-            file.save(file_path)
-            # Stocker seulement le nom du fichier dans la base de données
-            contenu = filename  # Au lieu du chemin complet
-
-    connection = create_db_connection()
-    if connection:
-        try:
-            cursor = connection.cursor(dictionary=True)
-            query = """
-                INSERT INTO modules (cours_id, type, titre, contenu, ordre)
-                VALUES (%s, %s, %s, %s, %s)
-            """
-            cursor.execute(query, (cours_id, type_module, titre, contenu, ordre))
-            connection.commit()
-
-            return jsonify({
-                "status": "success",
-                "message": "Module créé avec succès"
-            }), 201
-
-        except Error as e:
-            if file_path and os.path.exists(file_path):
-                os.remove(file_path)
-            return jsonify({"status": "error", "message": str(e)}), 500
-        finally:
-            cursor.close()
-            connection.close()
-
-    return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
 
 # Route pour récupérer les modules d'un cours
 @app.route('/api/modules/<cours_id>', methods=['GET'])
@@ -492,11 +445,7 @@ def get_modules(cours_id):
             connection.close()
 
     return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
-
-# Ajouter une route pour servir les fichiers uploadés
-@app.route('/uploads/<path:filename>')
-def serve_file(filename):
-    return send_from_directory(UPLOAD_FOLDER, filename)
+ 
 
 # Route pour récupérer un cours par ID
 @app.route('/api/cours/<cours_id>', methods=['GET'])
@@ -1680,40 +1629,59 @@ def get_course_comments_with_responses(cours_id):
 
     return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
 
- 
+# Authentification admin
+@app.route('/api/admin/login', methods=['POST'])
+def admin_login():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+    
     connection = create_db_connection()
     if connection:
         try:
             cursor = connection.cursor(dictionary=True)
+            query = """
+                SELECT id, nom, email, password_hash
+                FROM admin 
+                WHERE email = %s
+            """
+            cursor.execute(query, (email,))
+            admin = cursor.fetchone()
             
-            # Récupérer l'historique de l'élève
-            cursor.execute("""
-                SELECT c.* 
-                FROM cours c
-                JOIN eleve_cours ec ON c.id = ec.cours_id
-                WHERE ec.eleve_id = %s
-            """, (eleve_id,))
-            
-            user_history = cursor.fetchall()
-            
-            # Récupérer tous les cours disponibles
-            cursor.execute("SELECT * FROM cours")
-            all_courses = cursor.fetchall()
-            
-            # Préparer et obtenir les recommandations
-            recommender.prepare_features(all_courses)
-            recommendations = recommender.get_recommendations(eleve_id, user_history)
+            # Vérifier que admin existe et que le hash est valide
+            if admin and admin['password_hash']:
+                try:
+                    if check_password_hash(admin['password_hash'], password):
+                        return jsonify({
+                            "status": "success",
+                            "admin": {
+                                "id": admin['id'],
+                                "nom": admin['nom'],
+                                "email": admin['email']
+                            }
+                        })
+                except ValueError as e:
+                    print(f"Erreur de validation du hash: {str(e)}")
+                    return jsonify({
+                        "status": "error",
+                        "message": "Erreur d'authentification"
+                    }), 500
             
             return jsonify({
-                "status": "success",
-                "recommendations": recommendations
-            })
-            
+                "status": "error", 
+                "message": "Email ou mot de passe incorrect"
+            }), 401
+                
         except Error as e:
             return jsonify({"status": "error", "message": str(e)}), 500
         finally:
             cursor.close()
             connection.close()
+    
+    return jsonify({
+        "status": "error", 
+        "message": "Erreur de connexion à la base de données"
+    }), 500
 
 # Route pour le chatbot
 @app.route('/api/chatbot/query', methods=['POST'])
@@ -1747,6 +1715,371 @@ def chatbot_query():
             "status": "error",
             "message": "Une erreur inattendue s'est produite"
         }), 500
+    
+
+# Route pour mettre à jour les informations de l'administrateur
+@app.route('/api/admin/update/<admin_id>', methods=['PUT'])
+def update_admin(admin_id):
+    data = request.json
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            
+            # Construire la requête de mise à jour dynamiquement
+            fields = []
+            values = []
+            for key, value in data.items():
+                if key not in ['id', 'password', 'password_hash']:
+                    fields.append(f"{key} = %s")
+                    values.append(value)
+            
+            values.append(admin_id)
+            query = f"""
+                UPDATE admin 
+                SET {', '.join(fields)}
+                WHERE id = %s
+            """
+            
+            cursor.execute(query, values)
+            connection.commit()
+            
+            # Récupérer les informations mises à jour
+            cursor.execute("""
+                SELECT id, nom, email
+                FROM admin
+                WHERE id = %s
+            """, (admin_id,))
+            
+            updated_admin = cursor.fetchone()
+            
+            return jsonify({
+                "status": "success",
+                "message": "Profil mis à jour avec succès",
+                "admin": updated_admin
+            })
+            
+        except Error as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
+    
+    return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
+
+# Route pour mettre à jour le mot de passe de l'administrateur
+@app.route('/api/admin/password/<admin_id>', methods=['PUT'])
+def update_admin_password(admin_id):
+    data = request.json
+    if not all(k in data for k in ('currentPassword', 'newPassword')):
+        return jsonify({"status": "error", "message": "Données manquantes"}), 400
+
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            
+            # Vérifier l'ancien mot de passe
+            cursor.execute("SELECT password_hash FROM admin WHERE id = %s", (admin_id,))
+            admin = cursor.fetchone()
+            
+            if not admin or not check_password_hash(admin['password_hash'], data['currentPassword']):
+                return jsonify({"status": "error", "message": "Mot de passe actuel incorrect"}), 401
+            
+            # Mettre à jour avec le nouveau mot de passe
+            new_password_hash = generate_password_hash(data['newPassword'])
+            cursor.execute(
+                "UPDATE admin SET password_hash = %s WHERE id = %s",
+                (new_password_hash, admin_id)
+            )
+            connection.commit()
+            
+            return jsonify({
+                "status": "success",
+                "message": "Mot de passe mis à jour avec succès"
+            })
+            
+        except Error as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
+    
+    return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
+
+ 
+# Route pour récupérer tous les formateurs
+@app.route('/api/admin/formateurs', methods=['GET'])
+def get_all_formateurs():
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            
+            # Récupérer les formateurs avec le nombre de cours
+            query = """
+                SELECT 
+                    f.*,
+                    COUNT(c.id) as cours_count
+                FROM formateur f
+                LEFT JOIN cours c ON f.id = c.formateur_id
+                GROUP BY f.id
+                ORDER BY f.nom, f.prenom
+            """
+            cursor.execute(query)
+            formateurs = cursor.fetchall()
+            
+            # Formater les données JSON
+            for formateur in formateurs:
+                if formateur.get('specialites'):
+                    formateur['specialites'] = json.loads(formateur['specialites'])
+                if formateur.get('qualifications'):
+                    formateur['qualifications'] = json.loads(formateur['qualifications'])
+                # Supprimer le hash du mot de passe de la réponse
+                formateur.pop('password_hash', None)
+            
+            return jsonify({
+                "status": "success",
+                "formateurs": formateurs
+            })
+            
+        except Error as e:
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
+    
+    return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
+
+@app.route('/api/admin/formateur/<formateur_id>', methods=['DELETE'])
+def delete_formateur(formateur_id):
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            
+            # Commencer une transaction
+            connection.start_transaction()
+            
+            # 1. Supprimer les réponses aux commentaires du formateur
+            cursor.execute("""
+                DELETE FROM reponsecommentaires
+                WHERE formateur_id = %s
+            """, (formateur_id,))
+            
+            # 2. Récupérer tous les cours du formateur
+            cursor.execute("""
+                SELECT id FROM cours WHERE formateur_id = %s
+            """, (formateur_id,))
+            cours_ids = [row['id'] for row in cursor.fetchall()]
+            
+            for cours_id in cours_ids:
+                # 3. Supprimer les réponses aux quiz liées aux examens du cours
+                cursor.execute("""
+                    DELETE qr FROM eleve_quiz_reponses qr
+                    INNER JOIN quizzes q ON qr.quiz_id = q.id
+                    INNER JOIN examens e ON q.examen_id = e.id
+                    WHERE e.cours_id = %s
+                """, (cours_id,))
+                
+                # 4. Supprimer les résultats d'examens
+                cursor.execute("""
+                    DELETE er FROM eleve_examen_resultats er
+                    INNER JOIN examens e ON er.examen_id = e.id
+                    WHERE e.cours_id = %s
+                """, (cours_id,))
+                
+                # 5. Supprimer les quizzes
+                cursor.execute("""
+                    DELETE q FROM quizzes q
+                    INNER JOIN examens e ON q.examen_id = e.id
+                    WHERE e.cours_id = %s
+                """, (cours_id,))
+                
+                # 6. Supprimer les examens
+                cursor.execute("""
+                    DELETE FROM examens WHERE cours_id = %s
+                """, (cours_id,))
+                
+                # 7. Supprimer les progressions des modules
+                cursor.execute("""
+                    DELETE emp FROM eleve_module_progression emp
+                    INNER JOIN modules m ON emp.module_id = m.id
+                    WHERE m.cours_id = %s
+                """, (cours_id,))
+                
+                # 8. Supprimer les modules
+                cursor.execute("""
+                    DELETE FROM modules WHERE cours_id = %s
+                """, (cours_id,))
+                
+                # 9. Supprimer les inscriptions aux cours
+                cursor.execute("""
+                    DELETE FROM eleve_cours WHERE cours_id = %s
+                """, (cours_id,))
+                
+                # 10. Supprimer les commentaires
+                cursor.execute("""
+                    DELETE FROM commentaires WHERE cours_id = %s
+                """, (cours_id,))
+            
+            # 11. Supprimer tous les cours du formateur
+            cursor.execute("""
+                DELETE FROM cours WHERE formateur_id = %s
+            """, (formateur_id,))
+            
+            # 12. Enfin, supprimer le formateur
+            cursor.execute("""
+                DELETE FROM formateur WHERE id = %s
+            """, (formateur_id,))
+            
+            # Valider toutes les suppressions
+            connection.commit()
+            
+            return jsonify({
+                "status": "success",
+                "message": "Formateur et toutes ses données associées supprimés avec succès"
+            })
+            
+        except Error as e:
+            connection.rollback()
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
+    
+    return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
+
+# Route pour récupérer les détails d'un eleve
+@app.route('/api/admin/eleves', methods=['GET'])
+def get_eleves():
+    conn = create_db_connection()
+    if not conn:
+        return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
+
+    try:
+        cursor = conn.cursor(dictionary=True)
+        
+        # Requête pour obtenir les élèves avec le nombre de cours suivis
+        query = """
+            SELECT e.*, COUNT(ec.cours_id) as cours_count 
+            FROM eleve e 
+            LEFT JOIN eleve_cours ec ON e.id = ec.eleve_id 
+            GROUP BY e.id
+        """
+        cursor.execute(query)
+        eleves = cursor.fetchall()
+
+        return jsonify({
+            "status": "success",
+            "eleves": eleves
+        })
+
+    except Error as e:
+        print(f"Erreur: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
+# Route pour supprimer un élève
+@app.route('/api/admin/eleve/<int:eleve_id>', methods=['DELETE'])
+def delete_eleve(eleve_id):
+    conn = create_db_connection()
+    if not conn:
+        return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
+
+    try:
+        cursor = conn.cursor()
+
+        # Supprimer les enregistrements liés dans les autres tables
+        tables = ['eleve_cours', 'eleve_examen_resultats', 'eleve_module_progression', 
+                 'eleve_quiz_reponses', 'commentaires']
+        
+        for table in tables:
+            cursor.execute(f"DELETE FROM {table} WHERE eleve_id = %s", (eleve_id,))
+
+        # Supprimer l'élève
+        cursor.execute("DELETE FROM eleve WHERE id = %s", (eleve_id,))
+        conn.commit()
+
+        return jsonify({
+            "status": "success",
+            "message": "Élève supprimé avec succès"
+        })
+
+    except Error as e:
+        conn.rollback()
+        print(f"Erreur: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        if conn.is_connected():
+            cursor.close()
+            conn.close()
+
+# Configurer le dossier d'upload
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../uploads')
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Route pour créer un module
+@app.route('/api/module/create', methods=['POST'])
+def create_module():
+    if 'cours_id' not in request.form:
+        return jsonify({"status": "error", "message": "ID du cours requis"}), 400
+
+    type_module = request.form.get('type')
+    titre = request.form.get('titre')
+    contenu = request.form.get('contenu')
+    ordre = request.form.get('ordre', 1)
+    cours_id = request.form.get('cours_id')
+
+    if not all([type_module, titre, cours_id]):
+        return jsonify({"status": "error", "message": "Champs requis manquants"}), 400
+
+    # Gérer le fichier si présent
+    file_path = None
+    if 'fichier' in request.files:
+        file = request.files['fichier']
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(UPLOAD_FOLDER, filename)
+            file.save(file_path)
+            # Stocker seulement le nom du fichier dans la base de données
+            contenu = filename  # Au lieu du chemin complet
+
+    connection = create_db_connection()
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            query = """
+                INSERT INTO modules (cours_id, type, titre, contenu, ordre)
+                VALUES (%s, %s, %s, %s, %s)
+            """
+            cursor.execute(query, (cours_id, type_module, titre, contenu, ordre))
+            connection.commit()
+
+            return jsonify({
+                "status": "success",
+                "message": "Module créé avec succès"
+            }), 201
+
+        except Error as e:
+            if file_path and os.path.exists(file_path):
+                os.remove(file_path)
+            return jsonify({"status": "error", "message": str(e)}), 500
+        finally:
+            cursor.close()
+            connection.close()
+
+    return jsonify({"status": "error", "message": "Erreur de connexion à la base de données"}), 500
+ 
+# Ajouter une route pour servir les fichiers uploadés
+@app.route('/uploads/<path:filename>')
+def serve_file(filename):
+    return send_from_directory(UPLOAD_FOLDER, filename)
 
 if __name__ == '__main__':
     # Démarrer le serveur sur le port 5000

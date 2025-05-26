@@ -256,7 +256,7 @@ export default function FaireCour() {
               <p>
                 Le PDF ne peut pas être affiché.
                 <a
-                  href={`http://localhost:5000/${module.contenu}`}
+                  href={`http://localhost:5000/uploads/${module.contenu}`}
                   target="_blank"
                   className="text-orange-600 hover:text-orange-700"
                 >
@@ -270,7 +270,7 @@ export default function FaireCour() {
         return (
           <video controls className="w-full max-h-[400px]">
             <source
-              src={`http://localhost:5000/${module.contenu}`}
+              src={`http://localhost:5000/uploads/${module.contenu}`}
               type="video/mp4"
             />
             Votre navigateur ne supporte pas la lecture de vidéos.

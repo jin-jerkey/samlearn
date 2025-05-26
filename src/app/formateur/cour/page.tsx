@@ -6,6 +6,12 @@ import Image from 'next/image';
 import Header from '../component/Header';
 import Sidebar from '../component/Sidebar';
 
+const getRandomCourseImage = () => {
+  const imageNumbers = Array.from({ length: 9 }, (_, i) => i + 1);
+  const randomIndex = Math.floor(Math.random() * imageNumbers.length);
+  return `/cour/${imageNumbers[randomIndex]}.jpg`;
+};
+
 interface Course {
   id: number;
   titre: string;
@@ -16,6 +22,7 @@ interface Course {
   thumbnail?: string;
   mots_cles: string[];
   created_at: string;
+  randomImage: string;
 }
 
 interface Formateur {
@@ -51,7 +58,12 @@ export default function CourFormateur() {
         const response = await fetch(`http://localhost:5000/api/formateur/cours?formateur_id=${formateur.id}`);
         const data = await response.json();
         if (data.status === 'success') {
-          setCourses(data.courses);
+          // Modifier pour ajouter les images aléatoires
+          const coursesWithImages = data.courses.map((course: Course) => ({
+            ...course,
+            randomImage: getRandomCourseImage()
+          }));
+          setCourses(coursesWithImages);
         }
       } catch (error) {
         console.error('Erreur lors du chargement des cours:', error);
@@ -117,7 +129,7 @@ export default function CourFormateur() {
                   >
                     <div className="relative pt-[56.25%]">
                       <Image
-                        src={course.thumbnail || '/default-course.jpg'}
+                        src={course.randomImage || '/default-course.jpg'}
                         alt={course.titre}
                         fill
                         className="object-cover"

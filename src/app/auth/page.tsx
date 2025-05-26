@@ -63,7 +63,7 @@ export default function Auth() {
                 href="/admin"
                 className="font-medium text-orange-500 hover:text-orange-400"
               >
-                Créer un compte
+                connecter en tant qu&apos;administrateur
               </Link>
             </div>
           </div>

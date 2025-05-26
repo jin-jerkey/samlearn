@@ -261,10 +261,10 @@ export default function CourseDetail() {
                           <p className="text-sm text-gray-400">{new Date(comment.created_at).toLocaleDateString()}</p>
                         </div>
                         <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
+                          {Array.from({length: 5}, (_, index) => (
                             <span 
-                              key={`star-${comment.id}-${i}`} 
-                              className={`text-lg ${i < comment.note ? 'text-yellow-400' : 'text-gray-300'}`}
+                              key={`star-${comment.id}-${index}`}
+                              className={`text-lg ${index < comment.note ? 'text-yellow-400' : 'text-gray-300'}`}
                             >
                               ★
                             </span>
